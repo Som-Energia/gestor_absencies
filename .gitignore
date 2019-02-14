@@ -1,0 +1,13 @@
+# Text editor
+*sublime*
+
+# Python
+*.pyc
+__pycache__/
+*.log
+
+# Documentation (aglio)
+node_modules/
+
+# Config files
+*.yaml

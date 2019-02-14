@@ -1,0 +1,208 @@
+# gestor_absencies
+
+Gestor Absencies blablabla
+
+### Veure un usuari [GET /usuari/{id_usuari}]
+
++ Response 200 (application/json)
+
+        {
+            "id_usuari": "id_usuari",
+            "nom": "nom",
+            "inici_contracte": "11-06-2018",
+        }
+        
++ Response 401
+
++ Response 404
+
+### Crear un usuari [POST /usuari]
+
++ Request (application/json)
+
+        {
+            "nom": "nom",
+            "inici_contracte": "01-02-2019",
+        }
+
++ Response 200 (application/json)
+
+        {
+            "id_usuari": "id_usuari",
+            "nom": "nom",
+            "inici_contracte": "01-02-2019",
+        }
+
++ Response 401
+
++ Response 403
+
++ Response 400 (application/json)
+
+        {
+            "errors": {
+                "nom": "This name is already exist"
+            }
+        }
+
+### Modificar un usuari [PUT /usuari/{id_usuari}]
+
++ Request (application/json)
+
+        {
+            "nom": "Pepe"
+        }
+
++ Response 200 (application/json)
+
+        {
+            "id_usuari": "id_usuari",
+            "nom": "Pepe",
+            "inici_contracte": "11-06-2018",
+        }
+
++ Response 401
+
++ Response 403
+
++ Response 404
+
++ Response 400 (application/json)
+
+        {
+            "errors": {
+                "nom": "This name is already exist"
+            }
+        }
+
+### Treure un treballador a un equip de treball [DELETE /usuari/{id_usuari}]
+
++ Response 204
+
++ Response 401
+
++ Response 403
+
++ Response 404
+
+### Veure l'equip de treball [GET /team/{id_team}]
+
++ Response 200 (application/json)
+
+        {
+            "id_team": "id_team",
+            "nom": "nom",
+            "descripcio": "descripcio",
+            "minims_treball": 2,
+            "leader": "id_usuari",
+            "members": [
+                "id_usuari",
+                "id_usuari"
+            ]
+        }
+
++ Response 401
+
++ Response 404
+
+### Crear un equip [POST /team/{id_team}]
+
++ Request (application/json)
+
+        {
+            "nom": "nom",
+            "descripcio": "descripcio",
+            "leader": "id_usuari",
+            "members": [
+                {
+                    "id_usuari": "id_usuari",
+                    "nom": "nom"
+                }
+            ]
+        }
+
++ Response 200 (application/json)
+
+        {
+            "id_team": "id_team",
+            "nom": "nom",
+            "descripcio": "descripcio",
+            "minims_treball": null,
+            "leader": "id_usuari",
+            "members": [
+                {
+                    "id_usuari": "id_usuari",
+                    "nom": "nom"
+                }
+            ]
+        }
+
++ Response 401
+
++ Response 403
+
++ Response 400 (application/json)
+
+        {
+            "errors": {
+                "nom": "This name is already exist"
+            }
+        }
+
+### Modificar un equip de treball [PUT /team/{id_team}]
+
++ Request 200 (application/json)
+
+        {
+            "descripcio": "nova descripcio",
+            "members": [
+                {
+                    "id_usuari": "id_usuari",
+                    "nom": "nom"
+                }
+            ]
+        }
+
++ Response 200 (application/json)
+
+        {
+            "id_team": "id_team",
+            "nom": "nom",
+            "descripcio": "nova descripcio",
+            "minims_treball": 2,
+            "leader": "id_usuari",
+            "members": [
+                {
+                    "id_usuari": "id_usuari",
+                    "nom": "nom"
+                },
+                {
+                    "id_usuari": "id_usuari",
+                    "nom": "nom"
+                }
+            ]
+        }
+
++ Response 401
+
++ Response 403
+
++ Response 404
+
++ Response 400 (application/json)
+
+        {
+            "errors": {
+                "nom": "This name is already exist"
+            }
+        }
+
+### Eliminar un equip de treball [DELETE /team/{id_team}]
+
++ Response 204
+
++ Response 401
+
++ Response 403
+
++ Response 404
