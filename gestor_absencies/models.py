@@ -15,8 +15,12 @@ class Employee(models.Model):
 
 
 class Team(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     members = models.ManyToManyField(Employee)
 
     def __repr__(self):
         return self.name
+
+    class Meta:
+        ordering = ('name',)

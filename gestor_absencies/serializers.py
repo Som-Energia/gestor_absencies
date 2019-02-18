@@ -14,6 +14,9 @@ class EmployeeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(required=True, max_length=50)
+
     class Meta:
         model = Team
-        fields = ['name']
+        fields = ['id', 'name']
