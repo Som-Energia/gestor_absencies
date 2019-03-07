@@ -50,3 +50,6 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Team
         fields = ['id', 'name']
+
+    # def update(self, instance, validated_data):
+        

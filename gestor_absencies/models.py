@@ -32,13 +32,36 @@ class Worker(AbstractUser): # TODO: add BaseModel
         self.user_permissions.add(permission)# TODO: refactor
 
 
-class Team(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=50)
-    members = models.ManyToManyField(Employee)
+class Team(Base):
+
+    name = models.CharField(
+        max_length=50,
+        verbose_name=_("Team name"),
+        help_text=_("Team name")
+    )
+    members = models.ManyToManyField(Worker, through='Member')
 
     def __repr__(self):
         return self.name
 
     class Meta:
         ordering = ('name',)
+
+
+class Member(models.Model): # TODO: BaseModel?
+
+    worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
+
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+
+    is_referent = models.BooleanField(
+        default=False,
+        verbose_name=_("Referent in Team"),
+        help_text=_("")
+    )
+
+    is_representant = models.BooleanField(
+        default=False,
+        verbose_name=_("IT Representant in Team"),
+        help_text=_("")
+    )
