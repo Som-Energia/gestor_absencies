@@ -1,17 +1,35 @@
+from django.utils.translation import gettext as _
+from django.contrib.auth.models import AbstractUser, ContentType, Permission
 from django.db import models
 
 
-class Employee(models.Model):
-    id = models.AutoField(primary_key=True)
-    firstname = models.CharField(max_length=50)
-    secondname = models.CharField(max_length=50)
-    email = models.CharField(max_length=100)
+class Base(models.Model):
 
-    def __repr__(self):
-        return self.firstname, self.secondname, self.email
+    create_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Create date"),
+        help_text=_("Date when this object was saved")
+    )
 
-    class Meta:
-        ordering = ('firstname', 'secondname', 'email',)
+    modified_date = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Modified date"),
+        help_text=_("Date when this object was modified")
+    )
+
+
+class Worker(AbstractUser): # TODO: add BaseModel
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            pass
+
+        super(Worker, self).save(*args, **kwargs)
+
+        permission = Permission.objects.get(codename='view_worker')
+        self.user_permissions.add(permission)
+        permission = Permission.objects.get(codename='view_team')
+        self.user_permissions.add(permission)# TODO: refactor
 
 
 class Team(models.Model):

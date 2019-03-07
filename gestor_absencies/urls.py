@@ -14,12 +14,12 @@ datail_methods = {
 }
 
 urlpatterns = [
-    path('employees',
-         views.EmployeeViewSet.as_view(base_methods),
-         name='employees'),
-    path('employees/<int:pk>',
-         views.EmployeeViewSet.as_view(datail_methods),
-         name='employees_detail'),
+    path('workers',
+         views.WorkerViewSet.as_view(base_methods),
+         name='workers'),
+    path('workers/<int:pk>',
+         views.WorkerViewSet.as_view(datail_methods),
+         name='workers_detail'),
     path('teams',
          views.TeamViewSet.as_view(base_methods),
          name='teams'),
