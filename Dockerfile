@@ -6,4 +6,4 @@ RUN pip install -r requirements.txt
 COPY config /opt/config
 COPY gestor_absencies /opt/gestor_absencies
 COPY manage.py /opt/
-
+RUN pip install ipython
