@@ -30,6 +30,14 @@ class Worker(AbstractUser): # TODO: add BaseModel
         self.user_permissions.add(permission)
         permission = Permission.objects.get(codename='view_team')
         self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='view_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='add_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='change_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='delete_member')
+        self.user_permissions.add(permission)# TODO: refactor
 
 
 class Team(Base):
@@ -41,8 +49,8 @@ class Team(Base):
     )
     members = models.ManyToManyField(Worker, through='Member')
 
-    def __repr__(self):
-        return self.name
+    # def __repr__(self):
+    #     return self.name
 
     class Meta:
         ordering = ('name',)
@@ -65,3 +73,6 @@ class Member(models.Model): # TODO: BaseModel?
         verbose_name=_("IT Representant in Team"),
         help_text=_("")
     )
+
+    class Meta:
+        ordering = ('is_representant', 'is_referent')

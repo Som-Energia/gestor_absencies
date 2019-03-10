@@ -26,4 +26,10 @@ urlpatterns = [
     path('teams/<int:pk>',
          views.TeamViewSet.as_view(datail_methods),
          name='teams_detail'),
+    path('members',
+         views.MemberViewSet.as_view(base_methods),
+         name='members'),
+    path('members/<int:pk>',
+         views.MemberViewSet.as_view(datail_methods),
+         name='members_detail'),
 ]

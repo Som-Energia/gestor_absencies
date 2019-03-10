@@ -44,12 +44,26 @@ class CreateWorkerSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(read_only=True)
+    id = serializers.IntegerField(read_only=True) #TODO: REMOVE ID!!!
     name = serializers.CharField(required=True, max_length=50)
 
     class Meta:
         model = Team
         fields = ['id', 'name']
 
-    # def update(self, instance, validated_data):
-        
+
+class MemberSerializer(serializers.HyperlinkedModelSerializer):
+    worker = serializers.PrimaryKeyRelatedField(queryset=Worker.objects, required=False) #TODO: id_worker
+    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects, required=False) #TODO: id:team
+
+    class Meta:
+        model = Member
+        fields = ['id', 'worker', 'team', 'is_referent', 'is_representant']
+
+    def create(self, validated_data): #TODO: Validation worker and team exist
+        member = Member(
+            worker=validated_data['worker'],
+            team=validated_data['team']
+        )
+        member.save()
+        return member

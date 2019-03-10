@@ -1,5 +1,5 @@
 from django.test import TestCase
-from gestor_absencies.models import Team, Worker
+from gestor_absencies.models import Team, Worker, Member
 from django.urls import reverse
 
 
@@ -35,15 +35,15 @@ class MemberTest(TestCase):
         response = self.client.get(
             self.base_url
         )
-
+        print(response.json())
         expected = {'count': 1,
                     'next': None,
                     'previous': None,
                     'results':
-                    [{'id_worker': self.id_worker,
-                    'id_team': self.id_team,
-                    'is_referent': True,
-                    'id_representant': False,
+                    [{'worker': self.id_worker,
+                    'team': self.id_team,
+                    'is_referent': False,
+                    'is_representant': False,
                     'id': self.id_member,
                     }]
                     }
@@ -52,8 +52,8 @@ class MemberTest(TestCase):
 
     def test__add_member(self):
         body = {
-            'id_worker': self.id_worker,
-            'id_team': self.id_team
+            'worker': self.id_worker,
+            'team': self.id_team
         }
         self.client.login(username='Pablito', password='superpassword')
         response = self.client.post(
@@ -61,15 +61,15 @@ class MemberTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['id_worker'], self.id_worker)
-        self.assertEqual(response.json()['id_team'], self.id_team)
+        self.assertEqual(response.json()['worker'], self.id_worker)
+        self.assertEqual(response.json()['team'], self.id_team)
         self.assertEqual(response.json()['is_referent'], False)
-        self.assertEqual(response.json()['id_representant'], False)
+        self.assertEqual(response.json()['is_representant'], False)
 
     def test__remove_member(self):
         self.client.login(username='Pablito', password='superpassword')
         response = self.client.delete(
-            '/'.join([self.base_url, str(self.id_member)])
+            '/'.join([self.base_url, str(self.id_member)]) #TODO: Refactor URLjoin
         )
 
         self.assertEqual(response.status_code, 204)
@@ -85,10 +85,10 @@ class MemberTest(TestCase):
             content_type='application/json'
         )
 
-        expected = {'id_worker': self.id_worker,
-                    'id_team': self.id_team,
+        expected = {'worker': self.id_worker,
+                    'team': self.id_team,
                     'is_referent': True,
-                    'id_representant': False,
+                    'is_representant': False,
                     'id': self.id_member,
                     }
         self.assertEqual(response.status_code, 200)
