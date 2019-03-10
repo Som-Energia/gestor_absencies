@@ -4,7 +4,7 @@ from django.urls import reverse
 
 
 class MemberTest(TestCase):
-    def setUp(self):
+    def setUp(self):    #TODO: Refactor
         self.test_team = Team(
             name='IT',
         )
@@ -35,7 +35,7 @@ class MemberTest(TestCase):
         response = self.client.get(
             self.base_url
         )
-        print(response.json())
+
         expected = {'count': 1,
                     'next': None,
                     'previous': None,
@@ -49,6 +49,39 @@ class MemberTest(TestCase):
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
+
+    def test__list_filter_members(self):
+        self.test_otherteam = Team(
+            name='ET',
+        )
+        self.test_otherteam.save()
+        self.id_otherteam = self.test_otherteam.pk
+        self.member_otherrelation = Member(
+            worker=self.test_worker,
+            team=self.test_otherteam
+        )
+        self.member_otherrelation.save()
+
+        self.client.login(username='Pablito', password='superpassword')
+        response = self.client.get(
+            self.base_url, {'team': self.id_otherteam}
+        )
+
+        expected = {'count': 1,
+                    'next': None,
+                    'previous': None,
+                    'results':
+                    [{'worker': self.id_worker,
+                    'team': self.id_otherteam,
+                    'is_referent': False,
+                    'is_representant': False,
+                    'id': self.member_otherrelation.pk,
+                    }]
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+        self.member_otherrelation.delete()
 
     def test__add_member(self):
         body = {

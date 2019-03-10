@@ -50,3 +50,15 @@ class TeamViewSet(viewsets.ModelViewSet):
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
+
+    def get_queryset(self):
+        queryset = Member.objects.all()
+        team = self.request.query_params.get('team')
+        worker = self.request.query_params.get('worker')
+
+        if team:
+            queryset = queryset.filter(team=team)
+        elif worker:
+            queryset = queryset.filter(worker=worker)
+
+        return queryset
