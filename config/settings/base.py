@@ -79,6 +79,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
+    'JWT_VERIFY_EXPIRATION': False
 }
 
 LANGUAGE_CODE = 'en-us'
