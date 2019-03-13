@@ -2,11 +2,34 @@ from django.urls import include, path
 from rest_framework import routers
 from . import views
 
-router = routers.DefaultRouter()
-router.register(r'employees', views.EmployeeViewSet)
-router.register(r'teams', views.TeamViewSet)
+base_methods = {
+    'get': 'list',
+    'post': 'create',
+}
 
+datail_methods = {
+    'get': 'retrieve',
+    'put': 'update',
+    'delete': 'destroy'
+}
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('workers',
+         views.WorkerViewSet.as_view(base_methods),
+         name='workers'),
+    path('workers/<int:pk>',
+         views.WorkerViewSet.as_view(datail_methods),
+         name='workers_detail'),
+    path('teams',
+         views.TeamViewSet.as_view(base_methods),
+         name='teams'),
+    path('teams/<int:pk>',
+         views.TeamViewSet.as_view(datail_methods),
+         name='teams_detail'),
+    path('members',
+         views.MemberViewSet.as_view(base_methods),
+         name='members'),
+    path('members/<int:pk>',
+         views.MemberViewSet.as_view(datail_methods),
+         name='members_detail'),
 ]

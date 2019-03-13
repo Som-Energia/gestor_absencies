@@ -1,0 +1,7 @@
+databases:
+  develop:
+    name: name
+    host: host
+    port: 5432
+    user: user
+    password: password
