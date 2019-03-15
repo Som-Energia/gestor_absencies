@@ -1,7 +1,7 @@
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import AbstractUser, ContentType, Permission
 from django.db import models
-
+from swingtime.models import Event, EventType, Note, Occurrence
 
 class Base(models.Model):
 
@@ -18,7 +18,48 @@ class Base(models.Model):
     )
 
 
+class VacationPolicy(Base):
+
+    name = models.CharField(
+        max_length=50,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    description = models.CharField(
+        max_length=250,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    holydays = models.IntegerField(
+        default=0,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+
 class Worker(AbstractUser): # TODO: add BaseModel
+
+    category = models.CharField(
+        max_length=50,
+        default='',
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    holydays = models.IntegerField(
+        default=0,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    gender = models.CharField(
+        max_length=50,
+        default='',
+        verbose_name=_(""),
+        help_text=_("")
+    )
 
     def save(self, *args, **kwargs):
         if not self.pk:
@@ -76,3 +117,38 @@ class Member(models.Model): # TODO: BaseModel?
 
     class Meta:
         ordering = ('is_representant', 'is_referent')
+
+
+class SomEnergiaAbsenceType(EventType):
+
+    spend_days = models.BooleanField(
+        default=True,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    max_duration = models.DecimalField(
+        default=0,
+        decimal_places=1,
+        max_digits=10, # ??
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    min_duration = models.DecimalField(
+        default=0,
+        decimal_places=1,
+        max_digits=10, # ??
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+
+class SomEnergiaAbsence(Event):
+
+    worker = models.ForeignKey(
+        Worker,
+        on_delete=models.CASCADE,
+        verbose_name=_(""),
+        help_text=_("")
+    )
