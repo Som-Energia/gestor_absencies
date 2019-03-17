@@ -62,3 +62,8 @@ class MemberViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(worker=worker)
 
         return queryset
+
+
+class VacationPolicyViewSet(viewsets.ModelViewSet):
+    queryset = VacationPolicy.objects.all()
+    serializer_class = VacationPolicySerializer

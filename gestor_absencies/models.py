@@ -32,7 +32,7 @@ class VacationPolicy(Base):
         help_text=_("")
     )
 
-    holydays = models.IntegerField(
+    holidays = models.IntegerField(
         default=0,
         verbose_name=_(""),
         help_text=_("")
@@ -48,7 +48,7 @@ class Worker(AbstractUser): # TODO: add BaseModel
         help_text=_("")
     )
 
-    holydays = models.IntegerField(
+    holidays = models.IntegerField(
         default=0,
         verbose_name=_(""),
         help_text=_("")
@@ -57,6 +57,14 @@ class Worker(AbstractUser): # TODO: add BaseModel
     gender = models.CharField(
         max_length=50,
         default='',
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    vacation_policy = models.ForeignKey(
+        VacationPolicy,
+        null=True,
+        on_delete=models.CASCADE,
         verbose_name=_(""),
         help_text=_("")
     )
@@ -146,8 +154,8 @@ class SomEnergiaAbsenceType(EventType):
 
 class SomEnergiaAbsence(Event):
 
-    worker = models.ForeignKey(
-        Worker,
+    absence_type = models.ForeignKey(
+        SomEnergiaAbsenceType,
         on_delete=models.CASCADE,
         verbose_name=_(""),
         help_text=_("")

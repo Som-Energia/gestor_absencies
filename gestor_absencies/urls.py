@@ -32,4 +32,11 @@ urlpatterns = [
     path('members/<int:pk>',
          views.MemberViewSet.as_view(datail_methods),
          name='members_detail'),
+    path('vacationpolicy',
+         views.VacationPolicyViewSet.as_view(base_methods),
+         name='vacationpolicy'),
+    path('vacationpolicy/<int:pk>',
+         views.VacationPolicyViewSet.as_view(datail_methods),
+         name='vacationpolicy_detail'),
+  
 ]
