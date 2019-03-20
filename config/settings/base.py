@@ -5,11 +5,6 @@ BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
-try:
-    import dateutil
-except ImportError:
-    raise ImportError('django-swingtime requires the "python-dateutil" package')
-
 # Application definition
 
 INSTALLED_APPS = [

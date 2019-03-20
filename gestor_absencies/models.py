@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser, ContentType, Permission
 from django.db import models
 from swingtime.models import Event, EventType, Note, Occurrence
 
+
 class Base(models.Model):
 
     create_date = models.DateTimeField(
@@ -96,6 +97,13 @@ class Team(Base):
         verbose_name=_("Team name"),
         help_text=_("Team name")
     )
+
+    min_worker = models.IntegerField(
+        default=0,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
     members = models.ManyToManyField(Worker, through='Member')
 
     # def __repr__(self):
@@ -151,6 +159,12 @@ class SomEnergiaAbsenceType(EventType):
         help_text=_("")
     )
 
+    required_notify = models.BooleanField(
+        default=True,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
 
 class SomEnergiaAbsence(Event):
 
@@ -159,4 +173,21 @@ class SomEnergiaAbsence(Event):
         on_delete=models.CASCADE,
         verbose_name=_(""),
         help_text=_("")
+    )
+
+    worker = models.ForeignKey(
+        Worker,
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+
+class SomEnergiaOccurrence(Occurrence):
+
+    absence = models.ForeignKey(
+        SomEnergiaAbsence,
+        editable=False,
+        on_delete=models.CASCADE
     )
