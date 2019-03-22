@@ -38,5 +38,10 @@ urlpatterns = [
     path('vacationpolicy/<int:pk>',
          views.VacationPolicyViewSet.as_view(datail_methods),
          name='vacationpolicy_detail'),
-  
+    path('absencetype',
+         views.SomEnergiaAbsenceTypeViewSet.as_view(base_methods),
+         name='absencetype'),
+    path('absencetype/<int:pk>',
+         views.SomEnergiaAbsenceTypeViewSet.as_view(datail_methods),
+         name='absencetype'),
 ]

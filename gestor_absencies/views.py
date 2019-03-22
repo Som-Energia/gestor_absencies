@@ -1,8 +1,23 @@
 import logging
 
-from .models import *
+from .models import (
+    Worker,
+    Member,
+    Team,
+    SomEnergiaAbsenceType,
+    SomEnergiaOccurrence,
+    SomEnergiaAbsence,
+    VacationPolicy
+)
 from rest_framework import viewsets
-from .serializers import *
+from .serializers import (
+    CreateWorkerSerializer,
+    WorkerSerializer,
+    MemberSerializer,
+    TeamSerializer,
+    SomEnergiaAbsenceTypeSerializer,
+    VacationPolicySerializer
+)
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
@@ -39,13 +54,16 @@ class WorkerViewSet(viewsets.ModelViewSet):
     #     logger.debug(len(self.get_permissions()))
     #     return obj
 
+
 class CreateWorkerViewSet(viewsets.ModelViewSet):
     queryset = Worker.objects.all()
     serializer_class = WorkerSerializer
 
+
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
+
 
 class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
@@ -67,3 +85,8 @@ class MemberViewSet(viewsets.ModelViewSet):
 class VacationPolicyViewSet(viewsets.ModelViewSet):
     queryset = VacationPolicy.objects.all()
     serializer_class = VacationPolicySerializer
+
+
+class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
+    queryset = SomEnergiaAbsenceType.objects.all()
+    serializer_class = SomEnergiaAbsenceTypeSerializer

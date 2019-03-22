@@ -137,7 +137,7 @@ class Member(models.Model): # TODO: BaseModel?
 
 class SomEnergiaAbsenceType(EventType):
 
-    spend_days = models.BooleanField(
+    spend_days = models.BooleanField(   # Possible (-1 spend / 0 not / +1 add)
         default=True,
         verbose_name=_(""),
         help_text=_("")
