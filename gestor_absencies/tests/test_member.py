@@ -4,34 +4,24 @@ from django.urls import reverse
 
 
 class MemberTest(TestCase):
-    def setUp(self):    #TODO: Refactor
-        self.test_team = Team(
-            name='IT',
-        )
-        self.test_team.save()
+
+    def setUp(self):
+        self.test_team = create_team()
+
         self.id_team = self.test_team.pk
         self.base_url = reverse('members')
 
-        self.test_worker = Worker(
-            first_name='Worker',
-            last_name='Pla',
-            email='Worker@example.com',
-            username='Pablito',
-            password='superpassword'
-        )
-        self.test_worker.set_password('superpassword')
-        self.test_worker.save()
+        self.test_worker = create_worker()
         self.id_worker = self.test_worker.pk
 
-        self.member_relation = Member(
+        self.member_relation = create_member(
             worker=self.test_worker,
-            team=self.test_team
+            team=self.test_team,
         )
-        self.member_relation.save()
         self.id_member = self.member_relation.pk
 
     def test_list_members(self):
-        self.client.login(username='Pablito', password='superpassword')
+        self.client.login(username='username', password='password')
         response = self.client.get(
             self.base_url
         )
@@ -51,18 +41,14 @@ class MemberTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__list_filter_members(self):
-        self.test_otherteam = Team(
-            name='ET',
-        )
-        self.test_otherteam.save()
+        self.test_otherteam = create_team(name='ET')
         self.id_otherteam = self.test_otherteam.pk
-        self.member_otherrelation = Member(
+        self.member_otherrelation = create_member(
             worker=self.test_worker,
             team=self.test_otherteam
         )
-        self.member_otherrelation.save()
 
-        self.client.login(username='Pablito', password='superpassword')
+        self.client.login(username='username', password='password')
         response = self.client.get(
             self.base_url, {'team': self.id_otherteam}
         )
@@ -88,7 +74,7 @@ class MemberTest(TestCase):
             'worker': self.id_worker,
             'team': self.id_team
         }
-        self.client.login(username='Pablito', password='superpassword')
+        self.client.login(username='username', password='password')
         response = self.client.post(
             self.base_url, data=body
         )
@@ -100,7 +86,7 @@ class MemberTest(TestCase):
         self.assertEqual(response.json()['is_representant'], False)
 
     def test__remove_member(self):
-        self.client.login(username='Pablito', password='superpassword')
+        self.client.login(username='username', password='password')
         response = self.client.delete(
             '/'.join([self.base_url, str(self.id_member)]) #TODO: Refactor URLjoin
         )

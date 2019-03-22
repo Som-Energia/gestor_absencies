@@ -6,28 +6,10 @@ from django.test import Client
 
 class AdminTest(TestCase):
     def setUp(self):
-        self.test_worker = Worker(
-            first_name='Pablito',
-            last_name='Pla',
-            email='example@example.com',
-            username='uplabli',
-            password='uplabli'
-        )
-        self.test_worker.set_password('uplabli')
-        self.test_worker.save()
+        self.test_worker = create_worker()
+        self.test_admin = create_worker(username='admin', is_admin=True)
         self.id_worker = self.test_worker.pk
         self.base_url = reverse('workers')
-
-        self.test_admin = Worker(
-            first_name='Admin',
-            last_name='Pla',
-            email='admin@example.com',
-            username='Admin',
-            password='superpassword'
-        )
-        self.test_admin.set_password('superpassword')
-        self.test_admin.is_superuser = True
-        self.test_admin.save()
 
     def login_worker(self, username, password):
         body = {
@@ -40,13 +22,13 @@ class AdminTest(TestCase):
         return response
 
     def test__worker_login(self):
-        login_response = self.login_worker('Admin', 'superpassword')
+        login_response = self.login_worker('admin', 'password')
 
         self.assertEqual(login_response.status_code, 200)
         self.assertTrue(login_response.json()['token'] is not '')
 
     def test__worker_list__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             self.base_url
         )
@@ -72,7 +54,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__worker_get__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             '/'.join([self.base_url, str(self.id_worker)])
         )
@@ -94,7 +76,7 @@ class AdminTest(TestCase):
             'last_name': 'Manzano',
             'email': 'newmail@example.com'
         }
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
         )
@@ -109,11 +91,11 @@ class AdminTest(TestCase):
         self.assertTrue(login_response.json()['token'] is not '')
 
     def test__worker_put_email__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         body = {
-            'username': 'Peli',
-            'first_name': 'Pablito',
-            'last_name': 'Pla',
+            'username': 'worker',
+            'first_name': 'first_name',
+            'last_name': 'last_name',
             'email': 'newmail@example.com'
         }
         response = self.client.put(
@@ -122,63 +104,29 @@ class AdminTest(TestCase):
             content_type='application/json'
         )
 
-        expected = {'first_name': 'Pablito',
-                    'last_name': 'Pla',
+        expected = {'first_name': 'first_name',
+                    'last_name': 'last_name',
                     'email': 'newmail@example.com',
-                    'username': 'Peli',
+                    'username': 'worker',
                     'id': self.id_worker,
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
     def test__worker_delete__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.delete(
             '/'.join([self.base_url, str(self.id_worker)])
         )
         self.assertEqual(response.status_code, 204)
 
-    def tearDown(self):
-        self.test_worker.delete()
-
-
-class WorkerTest(TestCase):
-    def setUp(self):
-        self.test_worker = Worker(
-            first_name='Pablito',
-            last_name='Pla',
-            email='example@example.com',
-            username='uplabli',
-            password='uplabli'
-        )
-        self.test_worker.set_password('uplabli')
-        self.test_worker.save()
-        self.id_pablito = self.test_worker.pk
-        self.base_url = reverse('workers')
-
-    def login_worker(self, username, password):
-        body = {
-            'username': 'uplabli',
-            'password': 'uplabli',
-        }
-        response = self.client.post(
-            reverse('token_auth'), data=body
-        )
-        return response
-
-    def test__worker_login(self):
-        login_response = self.login_worker('uplabli', 'uplabli')
-
-        self.assertEqual(login_response.status_code, 200)
-        self.assertTrue(login_response.json()['token'] is not '')
-
     def test__worker_list__worker(self):
-        self.client.login(username='uplabli', password='uplabli')
+        self.client.login(username='username', password='password')
         response = self.client.get(
             self.base_url
         )
 
-        expected = {'count': 1,
+        expected = {'count': 2,
                     'next': None,
                     'previous': None,
                     'results':
@@ -193,7 +141,7 @@ class WorkerTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__worker_get__worker(self):
-        self.client.login(username='uplabli', password='uplabli')
+        self.client.login(username='username', password='password')
         response = self.client.get(
             '/'.join([self.base_url, str(self.id_pablito)])
         )
@@ -209,3 +157,4 @@ class WorkerTest(TestCase):
 
     def tearDown(self):
         self.test_worker.delete()
+        self.test_admin.delete()
