@@ -1,6 +1,11 @@
-from django.test import TestCase
-from gestor_absencies.models import Team, Worker, Member
+from os.path import join
 from django.urls import reverse
+from django.test import TestCase
+from gestor_absencies.tests.test_helper import (
+    create_member,
+    create_team,
+    create_worker,
+)
 
 
 class MemberTest(TestCase):
@@ -30,12 +35,14 @@ class MemberTest(TestCase):
                     'next': None,
                     'previous': None,
                     'results':
-                    [{'worker': self.id_worker,
-                    'team': self.id_team,
-                    'is_referent': False,
-                    'is_representant': False,
-                    'id': self.id_member,
-                    }]
+                    [
+                        {'worker': self.id_worker,
+                         'team': self.id_team,
+                         'is_referent': False,
+                         'is_representant': False,
+                         'id': self.id_member,
+                         },
+                    ]
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -57,12 +64,14 @@ class MemberTest(TestCase):
                     'next': None,
                     'previous': None,
                     'results':
-                    [{'worker': self.id_worker,
-                    'team': self.id_otherteam,
-                    'is_referent': False,
-                    'is_representant': False,
-                    'id': self.member_otherrelation.pk,
-                    }]
+                    [
+                        {'worker': self.id_worker,
+                         'team': self.id_otherteam,
+                         'is_referent': False,
+                         'is_representant': False,
+                         'id': self.member_otherrelation.pk,
+                         }
+                    ]
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -88,7 +97,7 @@ class MemberTest(TestCase):
     def test__remove_member(self):
         self.client.login(username='username', password='password')
         response = self.client.delete(
-            '/'.join([self.base_url, str(self.id_member)]) #TODO: Refactor URLjoin
+            join(self.base_url, str(self.id_member))
         )
 
         self.assertEqual(response.status_code, 204)
@@ -97,9 +106,9 @@ class MemberTest(TestCase):
         body = {
             'is_referent': True
         }
-        self.client.login(username='Pablito', password='superpassword')
-        response = self.client.put(    #TODO: Partial patch or put
-            '/'.join([self.base_url, str(self.id_member)]),
+        self.client.login(username='username', password='password')
+        response = self.client.put(
+            join(self.base_url, str(self.id_member)),
             data=body,
             content_type='application/json'
         )
@@ -112,3 +121,8 @@ class MemberTest(TestCase):
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
+
+    def tearDown(self):
+        self.member_relation.delete()
+        self.test_team.delete()
+        self.test_worker.delete()

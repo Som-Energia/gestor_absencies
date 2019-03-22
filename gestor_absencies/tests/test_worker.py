@@ -1,7 +1,7 @@
-from django.test import TestCase
-from gestor_absencies.models import Worker
+from os.path import join
 from django.urls import reverse
-from django.test import Client
+from django.test import TestCase
+from gestor_absencies.tests.test_helper import create_worker
 
 
 class AdminTest(TestCase):
@@ -37,18 +37,20 @@ class AdminTest(TestCase):
                     'next': None,
                     'previous': None,
                     'results':
-                    [{'first_name': 'Pablito',
-                     'last_name': 'Pla',
-                     'email': 'example@example.com',
-                     'username': 'uplabli',
-                     'id': self.id_worker,
-                     },
-                    {'first_name': 'Admin',
-                     'last_name': 'Pla',
-                     'email': 'admin@example.com',
-                     'username': 'Admin',
-                     'id': self.test_admin.pk,
-                     }]
+                    [
+                        {'email': 'email@example.com',
+                         'first_name': 'first_name',
+                         'id': self.test_admin.pk,
+                         'last_name': 'last_name',
+                         'username': 'admin',
+                         },
+                        {'email': 'email@example.com',
+                         'first_name': 'first_name',
+                         'id': self.id_worker,
+                         'last_name': 'last_name',
+                         'username': 'username',
+                         },
+                    ]
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -56,13 +58,13 @@ class AdminTest(TestCase):
     def test__worker_get__admin(self):
         self.client.login(username='admin', password='password')
         response = self.client.get(
-            '/'.join([self.base_url, str(self.id_worker)])
+            join(self.base_url, str(self.id_worker))
         )
 
-        expected = {'first_name': 'Pablito',
-                    'last_name': 'Pla',
-                    'email': 'example@example.com',
-                    'username': 'uplabli',
+        expected = {'first_name': 'first_name',
+                    'last_name': 'last_name',
+                    'email': 'email@example.com',
+                    'username': 'username',
                     'id': self.id_worker,
                     }
         self.assertEqual(response.status_code, 200)
@@ -99,7 +101,7 @@ class AdminTest(TestCase):
             'email': 'newmail@example.com'
         }
         response = self.client.put(
-            '/'.join([self.base_url, str(self.id_worker)]),
+            join(self.base_url, str(self.id_worker)),
             data=body,
             content_type='application/json'
         )
@@ -116,7 +118,7 @@ class AdminTest(TestCase):
     def test__worker_delete__admin(self):
         self.client.login(username='admin', password='password')
         response = self.client.delete(
-            '/'.join([self.base_url, str(self.id_worker)])
+            join(self.base_url, str(self.id_worker))
         )
         self.assertEqual(response.status_code, 204)
 
@@ -130,12 +132,20 @@ class AdminTest(TestCase):
                     'next': None,
                     'previous': None,
                     'results':
-                    [{'first_name': 'Pablito',
-                     'last_name': 'Pla',
-                     'email': 'example@example.com',
-                     'username': 'uplabli',
-                     'id': self.id_pablito,
-                     }]
+                    [
+                        {'email': 'email@example.com',
+                         'first_name': 'first_name',
+                         'id': self.test_admin.pk,
+                         'last_name': 'last_name',
+                         'username': 'admin',
+                         },
+                        {'email': 'email@example.com',
+                         'first_name': 'first_name',
+                         'id': self.id_worker,
+                         'last_name': 'last_name',
+                         'username': 'username',
+                         },
+                    ]
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -143,14 +153,14 @@ class AdminTest(TestCase):
     def test__worker_get__worker(self):
         self.client.login(username='username', password='password')
         response = self.client.get(
-            '/'.join([self.base_url, str(self.id_pablito)])
+            join(self.base_url, str(self.id_worker))
         )
 
-        expected = {'first_name': 'Pablito',
-                    'last_name': 'Pla',
-                    'email': 'example@example.com',
-                    'username': 'uplabli',
-                    'id': self.id_pablito,
+        expected = {'first_name': 'first_name',
+                    'last_name': 'last_name',
+                    'email': 'email@example.com',
+                    'username': 'username',
+                    'id': self.id_worker,
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
