@@ -1,4 +1,5 @@
 import os
+# import datetime
 
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -16,6 +17,7 @@ INSTALLED_APPS = [
     # 3th party libs
     'rest_framework',
     'rest_framework.authtoken',
+    'swingtime',
     # local apps
     'gestor_absencies.apps.GestorAbsenciesConfig',
 
