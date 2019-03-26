@@ -1,4 +1,12 @@
-from .models import *
+from .models import (
+    Worker,
+    Member,
+    Team,
+    SomEnergiaAbsenceType,
+    SomEnergiaOccurrence,
+    SomEnergiaAbsence,
+    VacationPolicy
+)
 from rest_framework import serializers
 
 
@@ -67,3 +75,29 @@ class MemberSerializer(serializers.HyperlinkedModelSerializer):
         )
         member.save()
         return member
+
+
+class VacationPolicySerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(required=True, max_length=50)
+    description = serializers.CharField(required=False, max_length=250)
+    holidays = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = VacationPolicy
+        fields = ['id', 'name', 'description', 'holidays']
+
+
+class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
+
+    label = serializers.CharField(required=False, max_length=50)
+
+    class Meta:
+        model = SomEnergiaAbsenceType
+        fields = [
+                    'id',
+                    'abbr',
+                    'label',
+                    'spend_days',
+                    'max_duration',
+                    'min_duration'
+        ]
