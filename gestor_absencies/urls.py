@@ -44,4 +44,10 @@ urlpatterns = [
     path('absencetype/<int:pk>',
          views.SomEnergiaAbsenceTypeViewSet.as_view(datail_methods),
          name='absencetype'),
+    path('absences',
+         views.SomEnergiaOccurrenceViewSet.as_view(base_methods),
+         name='absences'),
+    path('absences/<int:pk>',
+         views.SomEnergiaOccurrenceViewSet.as_view(datail_methods),
+         name='absences'),
 ]

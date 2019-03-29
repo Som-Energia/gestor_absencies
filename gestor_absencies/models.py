@@ -1,7 +1,10 @@
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
-from swingtime.models import Event, EventType, Note, Occurrence
+from swingtime.models import Event, EventType, Occurrence
+import datetime
+import dateutil
+from django.core.exceptions import ValidationError
 
 
 class Base(models.Model):
@@ -39,6 +42,13 @@ class VacationPolicy(Base):
         help_text=_("")
     )
 
+    def calculate_proportional_holidays(self):
+        now = datetime.date.today()
+        end_year = datetime.date(year=now.year, month=12, day=31)
+        difference = end_year - now
+        year_proportion = (difference.days) / 365
+        return year_proportion * self.holidays
+
 
 class Worker(AbstractUser): # TODO: add BaseModel
 
@@ -72,7 +82,8 @@ class Worker(AbstractUser): # TODO: add BaseModel
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            pass
+            if self.vacation_policy:
+                self.holidays = self.vacation_policy.calculate_proportional_holidays()
 
         super(Worker, self).save(*args, **kwargs)
 
@@ -88,6 +99,15 @@ class Worker(AbstractUser): # TODO: add BaseModel
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='delete_member')
         self.user_permissions.add(permission)# TODO: refactor
+
+        # TODO: I per cada save() es tornen a crear les relacions?
+        absence_type_list = SomEnergiaAbsenceType.objects.all()
+        for absence_type in absence_type_list:
+            absence = SomEnergiaAbsence(
+                absence_type=absence_type,
+                worker=self
+            )
+            absence.save()
 
 
 class Team(Base):
@@ -166,6 +186,18 @@ class SomEnergiaAbsenceType(EventType):
         help_text=_("")
     )
 
+    def save(self, *args, **kwargs):
+
+        super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
+
+        worker_list = Worker.objects.all()
+        for worker in worker_list:
+            absence = SomEnergiaAbsence(
+                absence_type=self,
+                worker=worker
+            )
+            absence.save()
+
 
 class SomEnergiaAbsence(Event):
 
@@ -184,6 +216,11 @@ class SomEnergiaAbsence(Event):
         help_text=_("")
     )
 
+    def save(self, *args, **kwargs):
+
+        self.event_type = self.absence_type
+        super(SomEnergiaAbsence, self).save(*args, **kwargs)
+
 
 class SomEnergiaOccurrence(Occurrence):
 
@@ -192,3 +229,69 @@ class SomEnergiaOccurrence(Occurrence):
         editable=False,
         on_delete=models.CASCADE
     )
+
+    def __init__(self, start_time, end_time, absence):
+            models.Model.__init__(self)
+            self.start_time = start_time
+            self.end_time = end_time
+            self.absence = absence
+
+    def day_counter(self):
+
+        if self.absence.absence_type.spend_days < 0:
+            # print (list(dateutil.rrule.rrule( # todo refactor
+            #     dtstart=self.start_time,
+            #     until=self.end_time,
+            #     freq=dateutil.rrule.DAILY,
+            #     byweekday=[0, 1, 2, 3, 4]
+            # )))
+            days = -1 * len(list(dateutil.rrule.rrule( # todo refactor
+                dtstart=self.start_time,
+                until=self.end_time,
+                freq=dateutil.rrule.DAILY,
+                byweekday=[0, 1, 2, 3, 4]
+            )))
+            # Si es modifica s'hauria de compovar si el dia és festiu i no
+            # days -= 1
+        elif self.absence.absence_type.spend_days > 0:
+            days = len(list(dateutil.rrule.rrule( # todo refactor
+                dtstart=self.start_time,
+                until=self.end_time,
+                freq=dateutil.rrule.DAILY,
+                byweekday=[5, 6]
+            )))
+            # Si es modifica s'hauria de compovar si el dia és festiu i no
+            # days += 1
+        else:
+            days = len(list(dateutil.rrule.rrule( # todo refactor
+                dtstart=self.start_time,
+                until=self.end_time,
+                freq=dateutil.rrule.DAILY,
+                byweekday=[0, 1, 2, 3, 4]
+            )))
+            # Si es modifica s'hauria de compovar si el dia és festiu i no
+            # days += 1
+
+        return days
+
+    def clean_fields(self, exclude=None, *args, **kwargs):
+        super().clean_fields(exclude=exclude)
+
+        duration = abs(self.day_counter())
+        if (duration > self.absence.absence_type.max_duration or
+            duration < self.absence.absence_type.min_duration):
+                    print('petose!---')
+                    raise ValidationError(_('Incorrect duration'))
+
+        # check if worker hace enought holidays
+
+    def save(self, *args, **kwargs):
+
+        self.full_clean()
+        
+        self.event = self.absence
+        super(SomEnergiaOccurrence, self).save(*args, **kwargs)
+
+        if self.absence.absence_type.spend_days != 0:
+            self.absence.worker.holidays += self.day_counter()
+        self.absence.worker.save()

@@ -16,6 +16,7 @@ from .serializers import (
     MemberSerializer,
     TeamSerializer,
     SomEnergiaAbsenceTypeSerializer,
+    SomEnergiaOccurrenceSerializer,
     VacationPolicySerializer
 )
 from django.shortcuts import get_object_or_404
@@ -55,11 +56,6 @@ class WorkerViewSet(viewsets.ModelViewSet):
     #     return obj
 
 
-class CreateWorkerViewSet(viewsets.ModelViewSet):
-    queryset = Worker.objects.all()
-    serializer_class = WorkerSerializer
-
-
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
@@ -90,3 +86,9 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
 class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
     queryset = SomEnergiaAbsenceType.objects.all()
     serializer_class = SomEnergiaAbsenceTypeSerializer
+
+
+class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
+    queryset = SomEnergiaOccurrence.objects.all()
+    serializer_class = SomEnergiaOccurrenceSerializer
+

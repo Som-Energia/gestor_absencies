@@ -8,6 +8,8 @@ from .models import (
     VacationPolicy
 )
 from rest_framework import serializers
+from gestor_absencies.common.datetime_calculator import calculate_datetime
+from django.core.exceptions import ValidationError
 
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
@@ -98,10 +100,63 @@ class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = SomEnergiaAbsenceType
         fields = [
-                    'id',
-                    'abbr',
-                    'label',
-                    'spend_days',
-                    'max_duration',
-                    'min_duration'
+            'id',
+            'abbr',
+            'label',
+            'spend_days',
+            'max_duration',
+            'min_duration'
         ]
+
+
+class SomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
+
+    absence = serializers.PrimaryKeyRelatedField(
+        queryset=SomEnergiaAbsence.objects,
+        required=True
+    )
+    start_morning = serializers.BooleanField(default=False, write_only=True)
+    start_afternoon = serializers.BooleanField(default=False, write_only=True)
+    end_morning = serializers.BooleanField(default=False, write_only=True)
+    end_afternoon = serializers.BooleanField(default=False, write_only=True)
+
+    class Meta:
+        model = SomEnergiaOccurrence
+        fields = [
+            'id',
+            'absence',
+            'start_time',
+            'end_time',
+            'start_morning',
+            'start_afternoon',
+            'end_morning',
+            'end_afternoon'
+        ]
+
+    def create(self, validated_data):
+
+        start_datetime = calculate_datetime(
+            dt=validated_data['start_time'],
+            morning=validated_data['start_morning'],
+            afternoon=validated_data['start_afternoon'],
+            is_start=True
+        )
+        end_datetime = calculate_datetime(
+            validated_data['end_time'],
+            morning=validated_data['end_morning'],
+            afternoon=validated_data['end_afternoon'],
+            is_start=False
+        )
+
+        occurrence = SomEnergiaOccurrence(
+            start_time=start_datetime,
+            end_time=end_datetime,
+            absence=validated_data['absence'],
+        )
+
+        try:
+            occurrence.save()
+        except ValidationError:
+            raise serializers.ValidationError('Invalid duration')
+
+        return occurrence
