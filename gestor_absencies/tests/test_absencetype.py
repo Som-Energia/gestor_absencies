@@ -8,7 +8,7 @@ class AdminTest(TestCase):
         self.test_absencetype = SomEnergiaAbsenceType(
             abbr='vacn',
             label='Vacances',
-            spend_days=True,
+            spend_days=1,
             min_duration=0.5,
             max_duration=-1,
         )
@@ -39,7 +39,7 @@ class AdminTest(TestCase):
                     'results':
                     [{'abbr': 'vacn',
                       'label': 'Vacances',
-                      'spend_days': True,
+                      'spend_days': 1,
                       'min_duration': '0.5',
                       'max_duration': '-1.0',
                       'id': self.id_absencetype
@@ -56,7 +56,7 @@ class AdminTest(TestCase):
 
         expected = {'abbr': 'vacn',
                     'label': 'Vacances',
-                    'spend_days': True,
+                    'spend_days': 1,
                     'min_duration': '0.5',
                     'max_duration': '-1.0',
                     'id': self.id_absencetype
@@ -68,7 +68,7 @@ class AdminTest(TestCase):
         body = {
             'abbr': 'baiA',
             'label': 'baixa A',
-            'spend_days': False,
+            'spend_days': 0,
             'min_duration': 1,
             'max_duration': 3,
         }
@@ -80,7 +80,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['abbr'], 'baiA')
         self.assertEqual(response.json()['label'], 'baixa A')
-        self.assertEqual(response.json()['spend_days'], False)
+        self.assertEqual(response.json()['spend_days'], 0)
         self.assertEqual(response.json()['min_duration'], '1.0')
         self.assertEqual(response.json()['max_duration'], '3.0')
 
@@ -88,7 +88,7 @@ class AdminTest(TestCase):
         self.client.login(username='Admin', password='superpassword')
         body = {
             'abbr': 'vacn',
-            'spend_days': True,
+            'spend_days': 1,
             'min_duration': 3,
             'max_duration': 10,
         }
@@ -100,7 +100,7 @@ class AdminTest(TestCase):
 
         expected = {'abbr': 'vacn',
                     'label': 'Vacances',
-                    'spend_days': True,
+                    'spend_days': 1,
                     'min_duration': '3.0',
                     'max_duration': '10.0',
                     'id': self.id_absencetype

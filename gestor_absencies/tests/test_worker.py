@@ -1,5 +1,5 @@
 from django.test import TestCase
-from gestor_absencies.models import Worker
+from gestor_absencies.models import Worker, VacationPolicy
 from django.urls import reverse
 from django.test import Client
 
@@ -28,6 +28,14 @@ class AdminTest(TestCase):
         self.test_admin.set_password('superpassword')
         self.test_admin.is_superuser = True
         self.test_admin.save()
+
+        self.test_vacation_policy = VacationPolicy(
+            name='normal',
+            description='tomorrow',
+            holidays=25
+        )
+        self.test_vacation_policy.save()
+
 
     def login_worker(self, username, password):
         body = {
@@ -92,7 +100,8 @@ class AdminTest(TestCase):
             'password': 'yalo',
             'first_name': 'Pelayo',
             'last_name': 'Manzano',
-            'email': 'newmail@example.com'
+            'email': 'newmail@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
         }
         self.client.login(username='Admin', password='superpassword')
         response = self.client.post(

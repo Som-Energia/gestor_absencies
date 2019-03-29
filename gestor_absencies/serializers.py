@@ -30,11 +30,15 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CreateWorkerSerializer(serializers.HyperlinkedModelSerializer):
+    vacation_policy = serializers.PrimaryKeyRelatedField(
+        queryset=VacationPolicy.objects,
+        required=True
+    )
 
     class Meta:
         model = Worker
         fields = [
-            'id', 'first_name', 'last_name', 'email', 'username', 'password'
+            'id', 'first_name', 'last_name', 'email', 'username', 'password', 'vacation_policy'
         ]
 
     def create(self, validated_data):
