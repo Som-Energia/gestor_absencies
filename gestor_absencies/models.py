@@ -1,5 +1,5 @@
 from django.utils.translation import gettext as _
-from django.contrib.auth.models import AbstractUser, ContentType, Permission
+from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
 from swingtime.models import Event, EventType, Note, Occurrence
 
@@ -137,8 +137,9 @@ class Member(models.Model): # TODO: BaseModel?
 
 class SomEnergiaAbsenceType(EventType):
 
-    spend_days = models.BooleanField(   # Possible (-1 spend / 0 not / +1 add)
-        default=True,
+    # TEET si fos +1 el div no sumari i diss si
+    spend_days = models.IntegerField(   # Possible (-1 spend / 0 not / +1 add)
+        default=0,
         verbose_name=_(""),
         help_text=_("")
     )
