@@ -1,30 +1,23 @@
-from django.test import TestCase
-from gestor_absencies.models import Team, Worker
+from os.path import join
 from django.urls import reverse
+from django.test import TestCase
+from gestor_absencies.tests.test_helper import (
+    create_worker,
+    create_team,
+)
 
 
-class AdminTest(TestCase):
+class TeamTest(TestCase):
     def setUp(self):
-        self.test_team = Team(
-            name='IT',
-        )
-        self.test_team.save()
+        self.test_team = create_team()
         self.id_team = self.test_team.pk
         self.base_url = reverse('teams')
 
-        self.test_admin = Worker(
-            first_name='Admin',
-            last_name='Pla',
-            email='admin@example.com',
-            username='Admin',
-            password='superpassword'
-        )
-        self.test_admin.set_password('superpassword')
-        self.test_admin.is_superuser = True
-        self.test_admin.save()
+        self.test_admin = create_worker(username='admin', is_admin=True)
+        self.test_worker = create_worker()
 
     def test__team_list__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             self.base_url
         )
@@ -41,9 +34,9 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__team_get__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
-            '/'.join([self.base_url, str(self.id_team)])
+            join(self.base_url, str(self.id_team))
         )
 
         expected = {'name': 'IT',
@@ -56,7 +49,7 @@ class AdminTest(TestCase):
         body = {
             'name': 'ET',
         }
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
         )
@@ -65,12 +58,12 @@ class AdminTest(TestCase):
         self.assertEqual(response.json()['name'], 'ET')
 
     def test__team_put__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         body = {
             'name': 'OV Team',
         }
         response = self.client.put(
-            '/'.join([self.base_url, str(self.id_team)]),
+            join(self.base_url, str(self.id_team)),
             data=body,
             content_type='application/json'
         )
@@ -82,37 +75,14 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__team_delete__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.delete(
-            '/'.join([self.base_url, str(self.id_team)])
+            join(self.base_url, str(self.id_team))
         )
         self.assertEqual(response.status_code, 204)
 
-    def tearDown(self):
-        self.test_team.delete()
-
-
-class WorkerTest(TestCase):
-    def setUp(self):
-        self.test_team = Team(
-            name='IT',
-        )
-        self.test_team.save()
-        self.id_team = self.test_team.pk
-        self.base_url = reverse('teams')
-
-        self.test_worker = Worker(
-            first_name='Pablito',
-            last_name='Pla',
-            email='example@example.com',
-            username='uplabli',
-            password='uplabli'
-        )
-        self.test_worker.set_password('uplabli')
-        self.test_worker.save()
-
     def test__team_list__worker(self):
-        self.client.login(username='uplabli', password='uplabli')
+        self.client.login(username='username', password='password')
         response = self.client.get(
             self.base_url
         )
@@ -129,9 +99,9 @@ class WorkerTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__team_get__worker(self):
-        self.client.login(username='uplabli', password='uplabli')
+        self.client.login(username='username', password='password')
         response = self.client.get(
-            '/'.join([self.base_url, str(self.id_team)])
+            join(self.base_url, str(self.id_team))
         )
 
         expected = {'name': 'IT',
@@ -143,3 +113,4 @@ class WorkerTest(TestCase):
     def tearDown(self):
         self.test_worker.delete()
         self.test_team.delete()
+        self.test_admin.delete()
