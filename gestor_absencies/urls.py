@@ -13,6 +13,11 @@ datail_methods = {
     'delete': 'destroy'
 }
 
+detail_methods_without_update = {
+    'get': 'retrieve',
+    'delete': 'destroy'
+}
+
 urlpatterns = [
     path('workers',
          views.WorkerViewSet.as_view(base_methods),
@@ -48,6 +53,6 @@ urlpatterns = [
          views.SomEnergiaOccurrenceViewSet.as_view(base_methods),
          name='absences'),
     path('absences/<int:pk>',
-         views.SomEnergiaOccurrenceViewSet.as_view(datail_methods),
+         views.SomEnergiaOccurrenceViewSet.as_view(detail_methods_without_update),
          name='absences'),
 ]

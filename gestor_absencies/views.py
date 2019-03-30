@@ -23,6 +23,8 @@ from .serializers import (
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
+from django.core.exceptions import ValidationError
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 
@@ -103,3 +105,9 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
             headers=headers
         )
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ValidationError:
+            raise serializers.ValidationError('Can not delete')
