@@ -230,12 +230,6 @@ class SomEnergiaOccurrence(Occurrence):
         on_delete=models.CASCADE
     )
 
-    def __init__(self, start_time, end_time, absence):
-            models.Model.__init__(self)
-            self.start_time = start_time
-            self.end_time = end_time
-            self.absence = absence
-
     def day_counter(self):
 
         if self.absence.absence_type.spend_days < 0:

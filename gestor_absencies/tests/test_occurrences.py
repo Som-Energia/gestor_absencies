@@ -42,7 +42,35 @@ class SomEnergiaOccurrenceTest(TestCase):
 		self.test_absencetype.save()
 		self.id_absencetype = self.test_absencetype.pk
 
-		self.id_absence = self.test_admin.somenergiaabsence_set.all()[0].pk
+		self.test_absence = self.test_admin.somenergiaabsence_set.all()[0]
+		self.id_absence = self.test_absence.pk
+
+		self.test_occurrence = SomEnergiaOccurrence(
+			absence=self.test_absence,
+			start_time='2019-03-18T09:00:00Z',
+			end_time='2019-03-20T17:00:00Z'
+		)
+		self.test_occurrence.save()
+
+	def test__list(self):
+		self.client.login(username='admin', password='admin')
+		response = self.client.get(
+			self.base_url
+		)
+		expected = {
+			'count': 1,
+			'next': None,
+			'previous': None,
+			'results':
+			[{
+				'id': 1,
+				'absence': self.id_absence,
+				'start_time': '2019-03-18T09:00:00Z',
+				'end_time': '2019-03-20T17:00:00Z'
+			}]
+		}
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json(), expected)
 
 	def test__simple_post_occurrence(self): # Todo: more cases
 		body = {
@@ -60,10 +88,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 		)
 
 		expected = {
-			'id': 1,
+			'id': 2,
 			'absence': self.id_absence,
 			'start_time': '2019-03-18T09:00:00Z',
 			'end_time': '2019-03-20T17:00:00Z'
 		}
 		self.assertEqual(response.status_code, 201)
-		self.assertEqual(response.json(), expected)
+		self.assertEqual(response.json()['absence'], self.id_absence)
+		self.assertEqual(response.json()['start_time'], '2019-03-18T09:00:00Z')
+		self.assertEqual(response.json()['end_time'], '2019-03-20T17:00:00Z')

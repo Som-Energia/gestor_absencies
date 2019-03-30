@@ -110,6 +110,18 @@ class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
+    
+    absence = serializers.PrimaryKeyRelatedField( # Todo SomEnergiaAbsenseType and Worker pk
+        queryset=SomEnergiaAbsence.objects,
+        required=True
+    )
+
+    class Meta:
+        model = SomEnergiaOccurrence
+        fields = ['id', 'absence', 'start_time', 'end_time']
+
+
+class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
 
     absence = serializers.PrimaryKeyRelatedField(
         queryset=SomEnergiaAbsence.objects,
