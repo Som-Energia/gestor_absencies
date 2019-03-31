@@ -271,10 +271,12 @@ class SomEnergiaOccurrence(Occurrence):
     def clean_fields(self, exclude=None, *args, **kwargs):
         super().clean_fields(exclude=exclude)
 
+        # if self.start_time.replace(tzinfo=None) < datetime.datetime.now():
+        #     raise ValidationError(_('Can not create a passade occurrence'))
+
         duration = abs(self.day_counter())
         if (duration > self.absence.absence_type.max_duration or
             duration < self.absence.absence_type.min_duration):
-                    print('petose!---')
                     raise ValidationError(_('Incorrect duration'))
 
         # check if worker hace enought holidays
@@ -283,11 +285,15 @@ class SomEnergiaOccurrence(Occurrence):
 
         self.full_clean()
         
+        duration = self.day_counter()
+        if duration < 0 and self.absence.worker.holidays > abs(duration):
+            raise ValidationError(_('Worker do not have enough holidays'))
+
         self.event = self.absence
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)
 
         if self.absence.absence_type.spend_days != 0:
-            self.absence.worker.holidays += self.day_counter()
+            self.absence.worker.holidays += duration
         self.absence.worker.save()
 
     def delete(self, *args, **kwargs):

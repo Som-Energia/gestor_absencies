@@ -169,6 +169,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         try:
             occurrence.save()
         except ValidationError:
-            raise serializers.ValidationError('Invalid duration')
+            raise serializers.ValidationError('Incorrect occurrence')
 
         return occurrence
