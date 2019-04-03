@@ -29,8 +29,9 @@ class SomEnergiaOccurrenceTest(TestCase):
         )
 
         self.test_admin = create_worker(username='admin', is_admin=True)
-
+        self.id_admin = self.test_admin.pk
         self.test_admin.vacation_policy = self.test_vacationpolicy
+        self.test_admin.holidays = 25 #Todo: mock dt.now()
         self.test_admin.save()
 
         self.test_absencetype = create_absencetype(
@@ -47,7 +48,9 @@ class SomEnergiaOccurrenceTest(TestCase):
 
         self.testoccurrence_start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         self.test_occurrence = create_occurrence(
-            absence=self.test_absence,
+            #absence=self.test_absence,
+            absence_type=self.test_absencetype,
+            worker=self.test_admin,
             start_time=self.testoccurrence_start_time,
             end_time=calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
@@ -66,7 +69,10 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['next'], None)
         self.assertEqual(response.json()['previous'], None)
         self.assertEqual(
-            response.json()['results'][0]['absence'], self.id_absence
+            response.json()['results'][0]['absence_type'], self.id_absencetype
+        )
+        self.assertEqual(
+            response.json()['results'][0]['worker'], self.id_admin
         )
         self.assertEqual(
             response.json()['results'][0]['start_time'],
@@ -82,7 +88,8 @@ class SomEnergiaOccurrenceTest(TestCase):
     def test__simple_post_occurrence(self): # Todo: more cases
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
-            'absence': self.id_absence,
+            'absence_type': self.id_absencetype,
+            'worker': self.id_admin,
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -96,7 +103,8 @@ class SomEnergiaOccurrenceTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['absence'], self.id_absence)
+        self.assertEqual(response.json()['absence_type'], self.id_absencetype)
+        self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
@@ -113,6 +121,96 @@ class SomEnergiaOccurrenceTest(TestCase):
             )
         )
 
+    def test__post_occurrence__generate_holidays(self):
+        absence_type = create_absencetype(
+            abbr='esco',
+            label='Escola',
+            spend_days=1,
+            min_duration=3,
+            max_duration=3
+        )
+        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 3, 1),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], absence_type.pk)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (calculate_occurrence_dates(start_time, 3, 1)).replace(
+                    hour=17,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(self.test_admin.holidays, 28)
+
+    def test__post_occurrence__substraction_holidays(self):
+        absence_type = create_absencetype(
+            abbr='esce',
+            label='Escola',
+            spend_days=-1,
+            min_duration=3,
+            max_duration=3
+        )
+        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 3, -1),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], absence_type.pk)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (calculate_occurrence_dates(start_time, 3, -1)).replace(
+                    hour=17,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(self.test_admin.holidays, 22)
+
     def test__delete_occurrence(self):
         self.client.login(username='admin', password='password')
         response = self.client.delete(
@@ -123,7 +221,9 @@ class SomEnergiaOccurrenceTest(TestCase):
     def test__cant_delete_started_occurrence(self):
         start_time = (dt.now() + td(days=-1)).replace(microsecond=0)
         self.new_occurrence = create_occurrence(
-            absence=self.test_absence,
+            #absence=self.test_absence,
+            absence_type=self.test_absencetype,
+            worker=self.test_admin,
             start_time=start_time,
             end_time=calculate_occurrence_dates(start_time, 3, 0)
         )
@@ -138,21 +238,19 @@ class SomEnergiaOccurrenceTest(TestCase):
 
 # TODO:
 
-# helper function to calculate correct occurrence duration
-# test create a passade occurrence
-# test create with spend_days +1 generate holidays
-# test create with spend_days -1 substraction holidays
 # test create without enough holidays
+# test create with 0 holidays and generate holidays (spend_days = 1)
+# test create a passade occurrence - - need mocks
 # test create with min duration 0.5
 # test create with max duration -1
 # test create with other occurrence at same time
 
+# test delete with spend_days +1 substraction holidays
+# test delete with spend_days -1 generate holidays
 # mock start_time attribute or datetime.now() in test__cant_delete_started_occurrence
 # test delete own occurrence - worker
 # test delete other worker occurrence's (worker)
 # test delete other worker occurrence's (admin)
-# test delete with spend_days +1 substraction holidays
-# test delete with spend_days -1 generate holidays
 
 
 # duration != compute days

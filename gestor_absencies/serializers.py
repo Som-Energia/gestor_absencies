@@ -110,23 +110,25 @@ class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
-    
-    absence = serializers.PrimaryKeyRelatedField( # Todo SomEnergiaAbsenseType and Worker pk
-        queryset=SomEnergiaAbsence.objects,
-        required=True
-    )
+
+    absence_type = serializers.SerializerMethodField()
+    worker = serializers.SerializerMethodField()
 
     class Meta:
         model = SomEnergiaOccurrence
-        fields = ['id', 'absence', 'start_time', 'end_time']
+        fields = ['id', 'absence_type', 'worker', 'start_time', 'end_time']
+
+    def get_absence_type(self, object):
+        return object.absence.absence_type.pk
+
+    def get_worker(self, object):
+        return object.absence.worker.pk
 
 
 class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
 
-    absence = serializers.PrimaryKeyRelatedField(
-        queryset=SomEnergiaAbsence.objects,
-        required=True
-    )
+    absence_type = serializers.IntegerField(required=True)
+    worker = serializers.IntegerField(required=True)
     start_morning = serializers.BooleanField(default=False, write_only=True)
     start_afternoon = serializers.BooleanField(default=False, write_only=True)
     end_morning = serializers.BooleanField(default=False, write_only=True)
@@ -136,7 +138,8 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         model = SomEnergiaOccurrence
         fields = [
             'id',
-            'absence',
+            'absence_type',
+            'worker',
             'start_time',
             'end_time',
             'start_morning',
@@ -160,10 +163,15 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             is_start=False
         )
 
+        absence = SomEnergiaAbsence.objects.all().filter(
+            worker=validated_data['worker'],
+            absence_type=validated_data['absence_type']
+        )[0]
+
         occurrence = SomEnergiaOccurrence(
             start_time=start_datetime,
             end_time=end_datetime,
-            absence=validated_data['absence'],
+            absence=absence,
         )
 
         try:
@@ -171,4 +179,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         except ValidationError:
             raise serializers.ValidationError('Incorrect occurrence')
 
+        occurrence.worker = validated_data['worker']
+        occurrence.absence_type = validated_data['absence_type']
         return occurrence

@@ -83,7 +83,10 @@ class Worker(AbstractUser): # TODO: add BaseModel
     def save(self, *args, **kwargs):
         if not self.pk:
             if self.vacation_policy:
-                self.holidays = self.vacation_policy.calculate_proportional_holidays()
+                self.holidays = round(
+                    self.vacation_policy.calculate_proportional_holidays(),
+                    0
+                )
 
         super(Worker, self).save(*args, **kwargs)
 
@@ -284,17 +287,18 @@ class SomEnergiaOccurrence(Occurrence):
     def save(self, *args, **kwargs):
 
         self.full_clean()
-        
+
         duration = self.day_counter()
-        if duration < 0 and self.absence.worker.holidays > abs(duration):
+        if duration < 0 and self.absence.worker.holidays < abs(duration):
             raise ValidationError(_('Worker do not have enough holidays'))
 
         self.event = self.absence
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)
 
         if self.absence.absence_type.spend_days != 0:
+            # self.absence.worker.holidays = F('holidays') + duration # TODO: more performance
             self.absence.worker.holidays += duration
-        self.absence.worker.save()
+            self.absence.worker.save()
 
     def delete(self, *args, **kwargs):
 
@@ -302,6 +306,7 @@ class SomEnergiaOccurrence(Occurrence):
             raise ValidationError(_('Can not remove a started occurrence'))
 
         if self.absence.absence_type.spend_days != 0:
+            # self.absence.worker.holidays = F('holidays') - self.day_counter() # TODO: more performance
             self.absence.worker.holidays -= self.day_counter()
 
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)

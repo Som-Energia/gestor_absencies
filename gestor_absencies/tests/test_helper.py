@@ -4,6 +4,7 @@ from gestor_absencies.models import (
     Member,
     VacationPolicy,
     SomEnergiaAbsenceType,
+    SomEnergiaAbsence,
     SomEnergiaOccurrence
 )
 import dateutil
@@ -72,7 +73,11 @@ def create_absencetype(abbr, label, spend_days, min_duration, max_duration):
     return absencetype
 
 
-def create_occurrence(absence, start_time, end_time):
+def create_occurrence(absence_type, worker, start_time, end_time):
+    absence = SomEnergiaAbsence.objects.all().filter(
+        worker=worker,
+        absence_type=absence_type
+    )[0]
     occurrence = SomEnergiaOccurrence(
         absence=absence,
         start_time=start_time,
