@@ -148,6 +148,19 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             'end_afternoon'
         ]
 
+    def validate(self, data):
+
+        if (not data['start_morning'] and not data['start_afternoon']) or (
+                not data['end_morning'] and not data['end_afternoon']):
+                    raise serializers.ValidationError('Incorrect occurrence')
+
+        if (data['end_time'].day - data['start_time'].day >= 1) and (
+            data['start_morning'] and not data['start_afternoon'] or
+                not data['end_morning'] and data['end_afternoon']):
+                    raise serializers.ValidationError('Incorrect occurrence')
+
+        return data
+
     def create(self, validated_data):
 
         start_datetime = calculate_datetime(

@@ -337,12 +337,208 @@ class SomEnergiaOccurrenceTest(TestCase):
         )
         self.test_admin.refresh_from_db()
 
-        self.test_admin.refresh_from_db()
-
         expected = ['Incorrect occurrence']
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), expected)
         self.assertEqual(self.test_admin.holidays, 0)
+
+    def test__post_ilimitate_days(self):
+        absence_type = create_absencetype(
+            abbr='esce',
+            label='Escola',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1
+        )
+        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 20, -1),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.test_admin.holidays = 25
+        self.test_admin.save()
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], absence_type.pk)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (calculate_occurrence_dates(start_time, 20, -1)).replace(
+                    hour=17,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(self.test_admin.holidays, 5)
+
+    def test__post_half_day(self):
+        absence_type = create_absencetype(
+            abbr='esce',
+            label='Escola',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1
+        )
+        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': False,
+            'end_time': calculate_occurrence_dates(start_time, 1, -1),
+            'end_morning': True,
+            'end_afternoon': False
+        }
+        self.test_admin.holidays = 25
+        self.test_admin.save()
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], absence_type.pk)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (calculate_occurrence_dates(start_time, 1, -1)).replace(
+                    hour=13,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(self.test_admin.holidays, 24.5)
+
+    def test__post_split_day(self):
+        absence_type = create_absencetype(
+            abbr='esce',
+            label='Escola',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1
+        )
+        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': False,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 2, 0),
+            'end_morning': True,
+            'end_afternoon': False
+        }
+        self.test_admin.holidays = 25
+        self.test_admin.save()
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], absence_type.pk)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (start_time).replace(hour=13, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+                (calculate_occurrence_dates(start_time, 2, -1)).replace(
+                    hour=13,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(self.test_admin.holidays, 24)
+
+    def test__post_cant_fractionate_occurrence(self):
+        absence_type = create_absencetype(
+            abbr='esce',
+            label='Escola',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1
+        )
+        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': False,
+            'end_time': calculate_occurrence_dates(start_time, 2, 0),
+            'end_morning': True,
+            'end_afternoon': False
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        expected = {'non_field_errors': ['Incorrect occurrence']}
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), expected)
+
+
+    def test__post_cant_empty_day(self):
+        absence_type = create_absencetype(
+            abbr='esce',
+            label='Escola',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1
+        )
+        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': False,
+            'start_afternoon': False,
+            'end_time': calculate_occurrence_dates(start_time, 2, 0),
+            'end_morning': True,
+            'end_afternoon': False
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        expected = {'non_field_errors': ['Incorrect occurrence']}
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), expected)
 
     def test__delete_occurrence(self):
         self.client.login(username='admin', password='password')
@@ -423,8 +619,7 @@ class SomEnergiaOccurrenceTest(TestCase):
 
 # TODO:
 
-# test create with min duration 0.5
-# test create with max duration -1
+# test create other worker occurrence
 # test create with other occurrence at same time
 
 # test delete generate (spend_days=1) without enough holidays

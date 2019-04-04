@@ -5,6 +5,7 @@ from swingtime.models import Event, EventType, Occurrence
 import datetime
 import dateutil
 from django.core.exceptions import ValidationError
+from decimal import Decimal
 
 
 class Base(models.Model):
@@ -59,8 +60,10 @@ class Worker(AbstractUser): # TODO: add BaseModel
         help_text=_("")
     )
 
-    holidays = models.IntegerField(
+    holidays = models.DecimalField(
         default=0,
+        decimal_places=1,
+        max_digits=10, # ??
         verbose_name=_(""),
         help_text=_("")
     )
@@ -235,51 +238,38 @@ class SomEnergiaOccurrence(Occurrence):
 
     def day_counter(self):
 
-        if self.absence.absence_type.spend_days < 0:
-            # print (list(dateutil.rrule.rrule( # todo refactor
-            #     dtstart=self.start_time,
-            #     until=self.end_time,
-            #     freq=dateutil.rrule.DAILY,
-            #     byweekday=[0, 1, 2, 3, 4]
-            # )))
-            days = -1 * len(list(dateutil.rrule.rrule( # todo refactor
-                dtstart=self.start_time,
-                until=self.end_time,
-                freq=dateutil.rrule.DAILY,
-                byweekday=[0, 1, 2, 3, 4]
-            )))
-            # Si es modifica s'hauria de compovar si el dia és festiu i no
-            # days -= 1
-        elif self.absence.absence_type.spend_days > 0:
-            days = len(list(dateutil.rrule.rrule( # todo refactor
-                dtstart=self.start_time,
-                until=self.end_time,
-                freq=dateutil.rrule.DAILY,
-                byweekday=[5, 6]
-            )))
-            # Si es modifica s'hauria de compovar si el dia és festiu i no
-            # days += 1
+        if self.absence.absence_type.spend_days > 0:
+            byweekday = [5, 6]
         else:
-            days = len(list(dateutil.rrule.rrule( # todo refactor
-                dtstart=self.start_time,
-                until=self.end_time,
-                freq=dateutil.rrule.DAILY,
-                byweekday=[0, 1, 2, 3, 4]
-            )))
-            # Si es modifica s'hauria de compovar si el dia és festiu i no
-            # days += 1
+            byweekday = [0, 1, 2, 3, 4]
+
+        days = len(list(dateutil.rrule.rrule(
+            dtstart=self.start_time,
+            until=self.end_time,
+            freq=dateutil.rrule.DAILY,
+            byweekday=byweekday
+        )))
+
+        if self.start_time.hour == 13:
+            days -= 0.5
+        if self.end_time.hour == 13:
+            days -= 0.5
+
+        if self.absence.absence_type.spend_days < 0:
+            days *= -1
 
         return days
 
     def clean_fields(self, exclude=None, *args, **kwargs):
         super().clean_fields(exclude=exclude)
 
-        # if self.start_time.replace(tzinfo=None) < datetime.datetime.now():
-        #     raise ValidationError(_('Can not create a passade occurrence'))
+        if self.start_time.replace(tzinfo=None) < datetime.datetime.now():
+            raise ValidationError(_('Can not create a passade occurrence'))
 
         duration = abs(self.day_counter())
-        if (duration > self.absence.absence_type.max_duration or
-            duration < self.absence.absence_type.min_duration):
+        if ((self.absence.absence_type.max_duration != -1 and
+             duration > self.absence.absence_type.max_duration) or
+                duration < self.absence.absence_type.min_duration):
                     raise ValidationError(_('Incorrect duration'))
         elif self.start_time.replace(tzinfo=None) < datetime.datetime.now():
                 raise ValidationError(_('Passed occurrence'))
@@ -297,7 +287,7 @@ class SomEnergiaOccurrence(Occurrence):
 
         if self.absence.absence_type.spend_days != 0:
             # self.absence.worker.holidays = F('holidays') + duration # TODO: more performance
-            self.absence.worker.holidays += duration
+            self.absence.worker.holidays += Decimal(duration)
             self.absence.worker.save()
 
     def delete(self, *args, **kwargs):
@@ -307,7 +297,7 @@ class SomEnergiaOccurrence(Occurrence):
 
         if self.absence.absence_type.spend_days != 0:
             # self.absence.worker.holidays = F('holidays') - self.day_counter() # TODO: more performance
-            self.absence.worker.holidays -= self.day_counter()
+            self.absence.worker.holidays -= Decimal(self.day_counter())
             self.absence.worker.save()
 
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)
