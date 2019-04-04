@@ -281,8 +281,8 @@ class SomEnergiaOccurrence(Occurrence):
         if (duration > self.absence.absence_type.max_duration or
             duration < self.absence.absence_type.min_duration):
                     raise ValidationError(_('Incorrect duration'))
-
-        # check if worker hace enought holidays
+        elif self.start_time.replace(tzinfo=None) < datetime.datetime.now():
+                raise ValidationError(_('Passed occurrence'))
 
     def save(self, *args, **kwargs):
 
@@ -308,5 +308,6 @@ class SomEnergiaOccurrence(Occurrence):
         if self.absence.absence_type.spend_days != 0:
             # self.absence.worker.holidays = F('holidays') - self.day_counter() # TODO: more performance
             self.absence.worker.holidays -= self.day_counter()
+            self.absence.worker.save()
 
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)
