@@ -1,15 +1,15 @@
-from gestor_absencies.models import (
-    Worker,
-    Team,
-    Member,
-    VacationPolicy,
-    SomEnergiaAbsenceType,
-    SomEnergiaAbsence,
-    SomEnergiaOccurrence
-)
-import dateutil
 from datetime import timedelta
 
+import dateutil
+from gestor_absencies.models import (
+    Member,
+    SomEnergiaAbsence,
+    SomEnergiaAbsenceType,
+    SomEnergiaOccurrence,
+    Team,
+    VacationPolicy,
+    Worker
+)
 
 worker_attributes = {
     'first_name': 'first_name',
@@ -34,9 +34,11 @@ def create_worker(username='username', is_admin=False):
     return worker
 
 
-def create_team(name='IT'):
+def create_team(created_by, name='IT'):
     team = Team(
-        name=name
+        name=name,
+        created_by=created_by,
+        modified_by=created_by
     )
     team.save()
     return team
@@ -51,11 +53,13 @@ def create_member(worker, team):
     return member
 
 
-def create_vacationpolicy(description, name='normal', holidays=25):
+def create_vacationpolicy(description, created_by, name='normal', holidays=25):
     vacationpolicy = VacationPolicy(
         name=name,
         description=description,
-        holidays=holidays
+        holidays=holidays,
+        created_by=created_by,
+        modified_by=created_by
     )
     vacationpolicy.save()
     return vacationpolicy

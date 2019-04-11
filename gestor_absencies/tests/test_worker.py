@@ -1,9 +1,10 @@
 from django.test import TestCase
-from gestor_absencies.models import VacationPolicy
 from os.path import join
 from django.urls import reverse
-from django.test import TestCase
-from gestor_absencies.tests.test_helper import create_worker
+from gestor_absencies.tests.test_helper import (
+    create_worker,
+    create_vacationpolicy
+)
 
 
 class AdminTest(TestCase):
@@ -13,12 +14,10 @@ class AdminTest(TestCase):
         self.id_worker = self.test_worker.pk
         self.base_url = reverse('workers')
 
-        self.test_vacation_policy = VacationPolicy(
-            name='normal',
+        self.test_vacation_policy = create_vacationpolicy(
             description='tomorrow',
-            holidays=25
+            created_by=self.test_admin
         )
-        self.test_vacation_policy.save()
 
     def login_worker(self, username, password):
         body = {

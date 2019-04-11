@@ -1,34 +1,30 @@
 from django.test import TestCase
 from gestor_absencies.models import SomEnergiaAbsenceType, Worker
 from django.urls import reverse
-
+from gestor_absencies.tests.test_helper import (
+    create_worker,
+    create_absencetype
+)
 
 class AdminTest(TestCase):
     def setUp(self):
-        self.test_absencetype = SomEnergiaAbsenceType(
+        self.test_absencetype = create_absencetype(
             abbr='vacn',
             label='Vacances',
             spend_days=1,
             min_duration=0.5,
             max_duration=-1,
         )
-        self.test_absencetype.save()
         self.id_absencetype = self.test_absencetype.pk
         self.base_url = reverse('absencetype')
 
-        self.test_admin = Worker(
-            first_name='Admin',
-            last_name='Pla',
-            email='admin@example.com',
-            username='Admin',
-            password='superpassword'
+        self.test_admin = create_worker(
+            username='admin',
+            is_admin=True
         )
-        self.test_admin.set_password('superpassword')
-        self.test_admin.is_superuser = True
-        self.test_admin.save()
 
     def test__absencetype_list__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             self.base_url
         )
@@ -49,7 +45,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__absencetype_get__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             '/'.join([self.base_url, str(self.id_absencetype)])
         )
@@ -72,7 +68,7 @@ class AdminTest(TestCase):
             'min_duration': 1,
             'max_duration': 3,
         }
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
         )
@@ -85,7 +81,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json()['max_duration'], '3.0')
 
     def test__absencetype_put__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         body = {
             'abbr': 'vacn',
             'spend_days': 1,
@@ -109,7 +105,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__absencetype_delete__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.delete(
             '/'.join([self.base_url, str(self.id_absencetype)])
         )

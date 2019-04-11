@@ -1,14 +1,107 @@
-from django.utils.translation import gettext as _
-from django.contrib.auth.models import AbstractUser, Permission
-from django.db import models
-from swingtime.models import Event, EventType, Occurrence
 import datetime
-import dateutil
-from django.core.exceptions import ValidationError
 from decimal import Decimal
+
+import dateutil
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser, Permission
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext as _
+from swingtime.models import Event, EventType, Occurrence
+
+
+class Worker(AbstractUser):
+
+    category = models.CharField(
+        max_length=50,
+        default='',
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    holidays = models.DecimalField(
+        default=0,
+        decimal_places=1,
+        max_digits=10, # ??
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    gender = models.CharField(
+        max_length=50,
+        default='',
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    vacation_policy = models.ForeignKey(
+        'gestor_absencies.VacationPolicy',
+        null=True,
+        on_delete=models.CASCADE,
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            if self.vacation_policy:
+                self.holidays = round(
+                    self.vacation_policy.calculate_proportional_holidays(),
+                    0
+                )
+
+        super(Worker, self).save(*args, **kwargs)
+
+        permission = Permission.objects.get(codename='view_worker')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='change_worker')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='view_team')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='change_team')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='view_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='add_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='change_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='delete_member')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='view_somenergiaabsencetype')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='add_somenergiaabsencetype')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='delete_somenergiaabsencetype')
+        self.user_permissions.add(permission)# TODO: refactor
+
+        # TODO: I per cada save() es tornen a crear les relacions?
+        absence_type_list = SomEnergiaAbsenceType.objects.all()
+        for absence_type in absence_type_list:
+            absence = SomEnergiaAbsence(
+                absence_type=absence_type,
+                worker=self
+            )
+            absence.save()
 
 
 class Base(models.Model):
+
+    created_by = models.ForeignKey(
+        get_user_model(),
+        related_name='+',
+        verbose_name=_('Created By'),
+        on_delete=models.CASCADE,
+        help_text=_('User who created the object')
+    )
+
+    modified_by = models.ForeignKey(
+        get_user_model(),
+        related_name='+',
+        on_delete=models.CASCADE,
+        verbose_name=_('Modified By'),
+        help_text=_('User who modified the object')
+    )
 
     create_date = models.DateTimeField(
         auto_now_add=True,
@@ -51,71 +144,6 @@ class VacationPolicy(Base):
         return year_proportion * self.holidays
 
 
-class Worker(AbstractUser): # TODO: add BaseModel
-
-    category = models.CharField(
-        max_length=50,
-        default='',
-        verbose_name=_(""),
-        help_text=_("")
-    )
-
-    holidays = models.DecimalField(
-        default=0,
-        decimal_places=1,
-        max_digits=10, # ??
-        verbose_name=_(""),
-        help_text=_("")
-    )
-
-    gender = models.CharField(
-        max_length=50,
-        default='',
-        verbose_name=_(""),
-        help_text=_("")
-    )
-
-    vacation_policy = models.ForeignKey(
-        VacationPolicy,
-        null=True,
-        on_delete=models.CASCADE,
-        verbose_name=_(""),
-        help_text=_("")
-    )
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            if self.vacation_policy:
-                self.holidays = round(
-                    self.vacation_policy.calculate_proportional_holidays(),
-                    0
-                )
-
-        super(Worker, self).save(*args, **kwargs)
-
-        permission = Permission.objects.get(codename='view_worker')
-        self.user_permissions.add(permission)
-        permission = Permission.objects.get(codename='view_team')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='view_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='add_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='change_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='delete_member')
-        self.user_permissions.add(permission)# TODO: refactor
-
-        # TODO: I per cada save() es tornen a crear les relacions?
-        absence_type_list = SomEnergiaAbsenceType.objects.all()
-        for absence_type in absence_type_list:
-            absence = SomEnergiaAbsence(
-                absence_type=absence_type,
-                worker=self
-            )
-            absence.save()
-
-
 class Team(Base):
 
     name = models.CharField(
@@ -139,7 +167,7 @@ class Team(Base):
         ordering = ('name',)
 
 
-class Member(models.Model): # TODO: BaseModel?
+class Member(models.Model):
 
     worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
 
@@ -179,6 +207,22 @@ class SomEnergiaAbsenceType(EventType):
     )
 
     min_duration = models.DecimalField(
+        default=0,
+        decimal_places=1,
+        max_digits=10, # ??
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    max_spend = models.DecimalField(
+        default=0,
+        decimal_places=1,
+        max_digits=10, # ??
+        verbose_name=_(""),
+        help_text=_("")
+    )
+
+    min_spend = models.DecimalField(
         default=0,
         decimal_places=1,
         max_digits=10, # ??
@@ -262,9 +306,6 @@ class SomEnergiaOccurrence(Occurrence):
 
     def clean_fields(self, exclude=None, *args, **kwargs):
         super().clean_fields(exclude=exclude)
-
-        if self.start_time.replace(tzinfo=None) < datetime.datetime.now():
-            raise ValidationError(_('Can not create a passade occurrence'))
 
         duration = abs(self.day_counter())
         if ((self.absence.absence_type.max_duration != -1 and

@@ -1,40 +1,31 @@
+from datetime import datetime as dt
+from datetime import timedelta as td
+
+from django.core.exceptions import ValidationError
 from django.test import TestCase
-from gestor_absencies.models import (
-    Worker,
-    SomEnergiaAbsenceType,
-    SomEnergiaAbsence,
-    SomEnergiaOccurrence,
-    VacationPolicy
-)
 from django.urls import reverse
-from datetime import (
-    datetime as dt,
-    timedelta as td
-)
 from gestor_absencies.tests.test_helper import (
     calculate_occurrence_dates,
-    create_worker,
-    create_vacationpolicy,
     create_absencetype,
-    create_occurrence
+    create_occurrence,
+    create_vacationpolicy,
+    create_worker
 )
-# from unittest.mock import MagicMock, PropertyMock, patch
-import mock
-from django.core.exceptions import ValidationError
 
 
 class SomEnergiaOccurrenceTest(TestCase):
     def setUp(self):
         self.base_url = reverse('absences')
 
-        self.test_vacationpolicy = create_vacationpolicy(
-            description='normal vacation policy'
-        )
-
         self.test_admin = create_worker(username='admin', is_admin=True)
         self.id_admin = self.test_admin.pk
+        
+        self.test_vacationpolicy = create_vacationpolicy(
+            description='normal vacation policy',
+            created_by=self.test_admin
+        )
         self.test_admin.vacation_policy = self.test_vacationpolicy
-        self.test_admin.holidays = 25 #Todo: mock dt.now()
+        self.test_admin.holidays = 25
         self.test_admin.save()
 
         self.test_absencetype = create_absencetype(
@@ -51,7 +42,6 @@ class SomEnergiaOccurrenceTest(TestCase):
 
         self.testoccurrence_start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         self.test_occurrence = create_occurrence(
-            #absence=self.test_absence,
             absence_type=self.test_absencetype,
             worker=self.test_admin,
             start_time=self.testoccurrence_start_time,
@@ -88,7 +78,7 @@ class SomEnergiaOccurrenceTest(TestCase):
             )
         )
 
-    def test__simple_post_occurrence(self): # Todo: more cases
+    def test__simple_post_occurrence(self):
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,

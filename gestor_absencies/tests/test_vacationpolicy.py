@@ -1,32 +1,28 @@
 from django.test import TestCase
-from gestor_absencies.models import VacationPolicy, Worker
 from django.urls import reverse
+from gestor_absencies.tests.test_helper import (
+    create_vacationpolicy,
+    create_worker
+)
 
 
 class AdminTest(TestCase):
     def setUp(self):
-        self.test_vacationpolicy = VacationPolicy(
-            name='normal',
-            description='normal vacation policy',
-            holidays=25
-        )
-        self.test_vacationpolicy.save()
-        self.id_vacationpolicy = self.test_vacationpolicy.pk
         self.base_url = reverse('vacationpolicy')
 
-        self.test_admin = Worker(
-            first_name='Admin',
-            last_name='Pla',
-            email='admin@example.com',
-            username='Admin',
-            password='superpassword'
+        self.test_admin = create_worker(
+            username='admin',
+            is_admin=True
         )
-        self.test_admin.set_password('superpassword')
-        self.test_admin.is_superuser = True
-        self.test_admin.save()
+
+        self.test_vacationpolicy = create_vacationpolicy(
+            description='normal vacation policy',
+            created_by=self.test_admin
+        )
+        self.id_vacationpolicy = self.test_vacationpolicy.pk
 
     def test__vacationpolicy_list__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             self.base_url
         )
@@ -45,7 +41,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__vacationpolicy_get__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.get(
             '/'.join([self.base_url, str(self.id_vacationpolicy)])
         )
@@ -64,7 +60,7 @@ class AdminTest(TestCase):
             'description': 'special vacation policy',
             'holidays': 30
         }
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
         )
@@ -75,7 +71,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json()['holidays'], 30)
 
     def test__vacationpolicy_put__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         body = {
             'name': 'normal',
             'holidays': 30
@@ -95,7 +91,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__vacationpolicy_delete__admin(self):
-        self.client.login(username='Admin', password='superpassword')
+        self.client.login(username='admin', password='password')
         response = self.client.delete(
             '/'.join([self.base_url, str(self.id_vacationpolicy)])
         )
