@@ -12,6 +12,9 @@ from gestor_absencies.tests.test_helper import (
     create_worker
 )
 
+from gestor_absencies.models import SomEnergiaAbsence
+
+
 
 class SomEnergiaOccurrenceTest(TestCase):
     def setUp(self):
@@ -41,14 +44,14 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.test_absence = self.test_admin.somenergiaabsence_set.all()[0]
         self.id_absence = self.test_absence.pk
 
-        self.testoccurrence_start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        self.testoccurrence_start_time = (dt.now() + td(days=1)).replace(hour=10, microsecond=0, minute=0)
         self.test_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
             worker=self.test_admin,
             start_time=self.testoccurrence_start_time,
             end_time=calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
-            ),
+            )
         )
         self.id_occurrence = self.test_occurrence.pk
 
@@ -70,11 +73,11 @@ class SomEnergiaOccurrenceTest(TestCase):
         )
         self.assertEqual(
             response.json()['results'][0]['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(self.testoccurrence_start_time)
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(self.testoccurrence_start_time)
         )
         self.assertEqual(
             response.json()['results'][0]['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 calculate_occurrence_dates(self.testoccurrence_start_time, 3, 0)
             )
         )
@@ -101,12 +104,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=9, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 3, 0)).replace(
                     hour=17,
                     minute=0,
@@ -165,12 +168,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=9, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 3, 1)).replace(
                     hour=17,
                     minute=0,
@@ -211,12 +214,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=9, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 3, -1)).replace(
                     hour=17,
                     minute=0,
@@ -290,12 +293,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=9, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 3, 1)).replace(
                     hour=17,
                     minute=0,
@@ -371,12 +374,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=9, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 20, -1)).replace(
                     hour=17,
                     minute=0,
@@ -419,12 +422,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=9, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 1, -1)).replace(
                     hour=13,
                     minute=0,
@@ -557,7 +560,7 @@ class SomEnergiaOccurrenceTest(TestCase):
             max_duration=3,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=3)).replace(hour=10, microsecond=0)
         self.new_occurrence = create_occurrence(
             absence_type=absence_type,
             worker=self.test_admin,
@@ -585,7 +588,7 @@ class SomEnergiaOccurrenceTest(TestCase):
             max_duration=3,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=3)).replace(hour=10, microsecond=0)
         self.new_occurrence = create_occurrence(
             absence_type=absence_type,
             worker=self.test_admin,

@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-import dateutil
+from dateutil import rrule
 from gestor_absencies.models import (
     Member,
     SomEnergiaAbsence,
@@ -100,10 +100,10 @@ def create_occurrence(absence_type, worker, start_time, end_time, created_by=Non
 
 
 def days_between_dates(start_time, end_time, dates_types):
-    return len(list(dateutil.rrule.rrule(
+    return len(list(rrule.rrule(
         dtstart=start_time,
         until=end_time,
-        freq=dateutil.rrule.DAILY,
+        freq=rrule.DAILY,
         byweekday=dates_types
     )))
 

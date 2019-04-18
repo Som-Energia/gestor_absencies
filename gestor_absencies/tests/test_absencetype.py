@@ -7,7 +7,13 @@ from gestor_absencies.tests.test_helper import (
 )
 
 class AdminTest(TestCase):
+
     def setUp(self):
+        self.test_admin = create_worker(
+            username='admin',
+            is_admin=True
+        )
+
         self.test_absencetype = create_absencetype(
             name='Vacances',
             description='Holiday time!',
@@ -19,10 +25,7 @@ class AdminTest(TestCase):
         self.id_absencetype = self.test_absencetype.pk
         self.base_url = reverse('absencetype')
 
-        self.test_admin = create_worker(
-            username='admin',
-            is_admin=True
-        )
+        self.test_worker = create_worker()
 
     def test__absencetype_list__admin(self):
         self.client.login(username='admin', password='password')

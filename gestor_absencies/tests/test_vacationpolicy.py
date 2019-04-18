@@ -14,6 +14,7 @@ class AdminTest(TestCase):
             username='admin',
             is_admin=True
         )
+        self.test_worker = create_worker()
 
         self.test_vacationpolicy = create_vacationpolicy(
             description='normal vacation policy',

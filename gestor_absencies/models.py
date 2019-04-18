@@ -7,15 +7,13 @@ from django.contrib.auth.models import AbstractUser, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext as _
-from swingtime.models import Event, EventType, Occurrence
-
 
 class Worker(AbstractUser):
 
     category = models.CharField(
         max_length=50,
         default='',
-        verbose_name=_(""),
+        verbose_name=_("Category"),
         help_text=_("")
     )
 
@@ -23,14 +21,14 @@ class Worker(AbstractUser):
         default=0,
         decimal_places=1,
         max_digits=10, # ??
-        verbose_name=_(""),
+        verbose_name=_("Holidays"),
         help_text=_("")
     )
 
     gender = models.CharField(
         max_length=50,
         default='',
-        verbose_name=_(""),
+        verbose_name=_("Gender"),
         help_text=_("")
     )
 
@@ -38,7 +36,7 @@ class Worker(AbstractUser):
         'gestor_absencies.VacationPolicy',
         null=True,
         on_delete=models.CASCADE,
-        verbose_name=_(""),
+        verbose_name=_("Vacation Policy"),
         help_text=_("")
     )
 
@@ -76,9 +74,14 @@ class Worker(AbstractUser):
         for absence_type in absence_type_list:
             absence = SomEnergiaAbsence(
                 absence_type=absence_type,
-                worker=self
+                worker=self,
+                created_by=self,
+                modified_by=self
             )
             absence.save()
+
+    def __str__(self):
+        return self.username
 
 
 class Base(models.Model):
@@ -116,19 +119,19 @@ class VacationPolicy(Base):
 
     name = models.CharField(
         max_length=50,
-        verbose_name=_(""),
+        verbose_name=_("Name"),
         help_text=_("")
     )
 
     description = models.CharField(
         max_length=250,
-        verbose_name=_(""),
+        verbose_name=_("Description"),
         help_text=_("")
     )
 
     holidays = models.IntegerField(
         default=0,
-        verbose_name=_(""),
+        verbose_name=_("Holidays"),
         help_text=_("")
     )
 
@@ -150,7 +153,7 @@ class Team(Base):
 
     min_worker = models.IntegerField(
         default=0,
-        verbose_name=_(""),
+        verbose_name=_("Minimun Workers"),
         help_text=_("")
     )
 
@@ -161,6 +164,9 @@ class Team(Base):
 
     class Meta:
         ordering = ('name',)
+
+    def __str__(self):
+        return self.name
 
 
 class Member(models.Model):
@@ -202,7 +208,7 @@ class SomEnergiaAbsenceType(Base):
     # TEET si fos +1 el div no sumari i diss si
     spend_days = models.IntegerField(   # Possible (-1 spend / 0 not / +1 add)
         default=0,
-        verbose_name=_(""),
+        verbose_name=_("Computation days"),
         help_text=_("")
     )
 
@@ -210,7 +216,7 @@ class SomEnergiaAbsenceType(Base):
         default=0,
         decimal_places=1,
         max_digits=10, # ??
-        verbose_name=_(""),
+        verbose_name=_("Maximun Duration"),
         help_text=_("")
     )
 
@@ -218,7 +224,7 @@ class SomEnergiaAbsenceType(Base):
         default=0,
         decimal_places=1,
         max_digits=10, # ??
-        verbose_name=_(""),
+        verbose_name=_("Minimun Duration"),
         help_text=_("")
     )
 
@@ -226,7 +232,7 @@ class SomEnergiaAbsenceType(Base):
         default=0,
         decimal_places=1,
         max_digits=10, # ??
-        verbose_name=_(""),
+        verbose_name=_("Maximun Computation"),
         help_text=_("")
     )
 
@@ -234,13 +240,13 @@ class SomEnergiaAbsenceType(Base):
         default=0,
         decimal_places=1,
         max_digits=10, # ??
-        verbose_name=_(""),
+        verbose_name=_("Minimun Computation"),
         help_text=_("")
     )
 
     required_notify = models.BooleanField(
         default=True,
-        verbose_name=_(""),
+        verbose_name=_("Required Notify"),
         help_text=_("")
     )
 
@@ -252,17 +258,21 @@ class SomEnergiaAbsenceType(Base):
         for worker in worker_list:
             absence = SomEnergiaAbsence(
                 absence_type=self,
-                worker=worker
+                worker=worker,
+                created_by=self.created_by,
+                modified_by=self.modified_by
             )
             absence.save()
 
+    def __str__(self):
+        return self.name
 
 class SomEnergiaAbsence(Base):
 
     absence_type = models.ForeignKey(
         SomEnergiaAbsenceType,
         on_delete=models.CASCADE,
-        verbose_name=_(""),
+        verbose_name=_("Absence Type"),
         help_text=_("")
     )
 
@@ -270,7 +280,7 @@ class SomEnergiaAbsence(Base):
         Worker,
         null=True,
         on_delete=models.CASCADE,
-        verbose_name=_(""),
+        verbose_name=_("Worker"),
         help_text=_("")
     )
 
@@ -290,8 +300,10 @@ class SomEnergiaOccurrence(Base):
 
     absence = models.ForeignKey(
         SomEnergiaAbsence,
-        editable=False,
-        on_delete=models.CASCADE
+        # editable=False,
+        on_delete=models.CASCADE,
+        verbose_name=_("Absence"),
+        help_text=_("")
     )
 
     def day_counter(self):
