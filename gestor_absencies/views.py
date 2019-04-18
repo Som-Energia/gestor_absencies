@@ -44,24 +44,31 @@ class WorkerViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    # def get_object(self):
-    #     obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
-    #     logger.debug(self.kwargs["pk"])
-    #     self.check_object_permissions(self.request, obj)
-    #     logger.debug(self.check_object_permissions(self.request, obj))
-    #     logger.debug(self.request.data)
-    #     logger.debug(self.request.user)
-    #     for p in self.get_permissions():
-    #         logger.debug(p)
-    #         logger.debug(p.perms_map)
-    #         logger.debug(p.get_required_permissions('GET', obj))
-    #     logger.debug(len(self.get_permissions()))
-    #     return obj
+    def perform_create(self, serializer):
+        if self.request.user.is_superuser:
+            serializer.save()
+            # TODO: Add create_by, modified_time...
+
+    def perform_update(self, serializer):
+        if self.request.user == self.get_object() or self.request.user.is_superuser:
+            serializer.save()
+            # TODO: modified_time...
 
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(
+            created_by=self.request.user,
+            modified_by=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            modified_by=self.request.user
+        )
 
 
 class MemberViewSet(viewsets.ModelViewSet):
@@ -84,6 +91,18 @@ class MemberViewSet(viewsets.ModelViewSet):
 class VacationPolicyViewSet(viewsets.ModelViewSet):
     queryset = VacationPolicy.objects.all()
     serializer_class = VacationPolicySerializer
+
+    def perform_create(self, serializer):
+
+        serializer.save(
+            created_by=self.request.user,
+            modified_by=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            modified_by=self.request.user
+        )
 
 
 class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):

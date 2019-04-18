@@ -174,6 +174,100 @@ class AdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
+    def test__worker_cant_post__worker(self):
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'email': 'newmail@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
+        }
+        self.client.login(username='username', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__worker_cant_put_email__worker(self):
+        second_worker = create_worker(username='new_worker')
+        self.client.login(username='username', password='password')
+        body = {
+            'username': 'new_worker',
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'newmail@example.com'
+        }
+
+        response = self.client.put(
+            join(self.base_url, str(second_worker.pk)),
+            data=body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__worker_can_update_her_profile__worker(self):
+        self.client.login(username='username', password='password')
+        body = {
+            'username': 'worker',
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'newmail@example.com'
+        }
+        response = self.client.put(
+            join(self.base_url, str(self.id_worker)),
+            data=body,
+            content_type='application/json'
+        )
+
+        expected = {'first_name': 'first_name',
+                    'last_name': 'last_name',
+                    'email': 'newmail@example.com',
+                    'username': 'worker',
+                    'id': self.id_worker,
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+    def test__worker_cant_delete__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.delete(
+            join(self.base_url, str(self.id_worker))
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__worker_need_vacationpolicy(self):
+        pass
+
+    def test__create_worker_create_her_somenergiaabsences(self):
+        pass
+
+    def test__worker_post_set_create_modified_params(self):
+        pass
+
+    def test__worker_put_set_modified_params(self):
+        pass
+
     def tearDown(self):
         self.test_worker.delete()
         self.test_admin.delete()
+
+
+# TODO: Tests
+
+# Post Worker no need category and gender attributes
+# With unexpected body params no raise error

@@ -130,3 +130,13 @@ class MemberTest(TestCase):
         self.member_relation.delete()
         self.test_team.delete()
         self.test_worker.delete()
+
+
+# TODO: Tests
+
+# Worker only update her relations
+# Worker only delete her relations
+# Worker only create her relations
+# Delete Worker and her Members relations
+# Delete Team and her Members relation
+# With unexpected body params no raise error

@@ -658,6 +658,7 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(ctx.exception.message, 'Can not remove a started occurrence')
 
     def test__post__occurrence_between_other_occurrences_split(self):
+        start_time = (dt.now() + td(days=4)).replace(hour=10, microsecond=0)
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -708,14 +709,14 @@ class SomEnergiaOccurrenceTest(TestCase):
                 worker=self.test_admin,
                 absence_type=self.test_absencetype
             )[0].somenergiaoccurrence_set.all()[0].end_time,
-            (start_time - td(days=1)).replace(hour=17)
+            (start_time - td(days=1)).replace(hour=17, minute=0, second=0)
         )
         self.assertEqual(
             SomEnergiaAbsence.objects.all().filter(
                 worker=self.test_admin,
                 absence_type=self.test_absencetype
             )[0].somenergiaoccurrence_set.all()[1].start_time,
-            (calculate_occurrence_dates(start_time, 1, 0) + td(days=1)).replace(hour=9)
+            (calculate_occurrence_dates(start_time, 1, 0) + td(days=1)).replace(hour=9, minute=0, second=0)
         )
 
     def tearDown(self):

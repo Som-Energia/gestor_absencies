@@ -213,7 +213,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 if start_occurrence.day < start_datetime.day:
                     first_occurrence = SomEnergiaOccurrence(
                         start_time=start_occurrence,
-                        end_time=(start_datetime - td(days=1)).replace(hour=15),
+                        end_time=(start_datetime - td(days=1)).replace(hour=17),
                         absence=absence_occurrence,
                         created_by=created_by_occurrence,
                         modified_by=modified_by_occurrence
