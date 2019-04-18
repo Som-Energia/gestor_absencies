@@ -29,11 +29,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.test_admin.save()
 
         self.test_absencetype = create_absencetype(
-            abbr='bdef',
-            label='Baixa defuncio',
+            name='Baixa defuncio',
+            description='Baixa defuncio',
             spend_days=0,
             min_duration=3,
             max_duration=3,
+            created_by=self.test_admin
         )
         self.id_absencetype = self.test_absencetype.pk
 
@@ -135,11 +136,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_occurrence__generate_holidays(self):
         absence_type = create_absencetype(
-            abbr='esco',
-            label='Escola',
+            name='Escola',
+            description='Escola',
             spend_days=1,
             min_duration=3,
-            max_duration=3
+            max_duration=3,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -180,11 +182,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_occurrence__substraction_holidays(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=3,
-            max_duration=3
+            max_duration=3,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -225,11 +228,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_occurrence__not_enough_holidays(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=30,
-            max_duration=30
+            max_duration=30,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=30)).replace(microsecond=0)
         body = {
@@ -255,11 +259,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_occurrence__generate_holidays_without_worker_holidays(self):
         absence_type = create_absencetype(
-            abbr='esco',
-            label='Escola',
+            name='esco',
+            description='Escola',
             spend_days=1,
             min_duration=3,
-            max_duration=3
+            max_duration=3,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -302,11 +307,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_occurrence__substraction_holidays_without_worker_holidays(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=3,
-            max_duration=3
+            max_duration=3,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -334,11 +340,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_ilimitate_days(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=0.5,
-            max_duration=-1
+            max_duration=-1,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -381,11 +388,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_half_day(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=0.5,
-            max_duration=-1
+            max_duration=-1,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -428,11 +436,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_split_day(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=0.5,
-            max_duration=-1
+            max_duration=-1,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -458,12 +467,12 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.json()['worker'], self.id_admin)
         self.assertEqual(
             response.json()['start_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (start_time).replace(hour=13, minute=0, second=0))
         )
         self.assertEqual(
             response.json()['end_time'],
-            '{0:%Y-%m-%dT%H:%M:%SZ}'.format(
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
                 (calculate_occurrence_dates(start_time, 2, -1)).replace(
                     hour=13,
                     minute=0,
@@ -475,11 +484,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_cant_fractionate_occurrence(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=0,
             min_duration=0.5,
-            max_duration=-1
+            max_duration=-1,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -504,11 +514,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__post_cant_empty_day(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=0,
             min_duration=0.5,
-            max_duration=-1
+            max_duration=-1,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -539,11 +550,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__delete_occurrence__generate_holidays(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=-1,
             min_duration=3,
-            max_duration=3
+            max_duration=3,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         self.new_occurrence = create_occurrence(
@@ -566,11 +578,12 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__delete_occurrence__substraction_holidays(self):
         absence_type = create_absencetype(
-            abbr='esce',
-            label='Escola',
+            name='esce',
+            description='Escola',
             spend_days=1,
             min_duration=3,
-            max_duration=3
+            max_duration=3,
+            created_by=self.test_admin
         )
         start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         self.new_occurrence = create_occurrence(

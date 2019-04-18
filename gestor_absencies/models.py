@@ -58,8 +58,6 @@ class Worker(AbstractUser):
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='view_team')
         self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='change_team')
-        self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='view_member')
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='add_member')
@@ -70,9 +68,7 @@ class Worker(AbstractUser):
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='view_somenergiaabsencetype')
         self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='add_somenergiaabsencetype')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='delete_somenergiaabsencetype')
+        permission = Permission.objects.get(codename='view_vacationpolicy')
         self.user_permissions.add(permission)# TODO: refactor
 
         # TODO: I per cada save() es tornen a crear les relacions?
@@ -188,8 +184,20 @@ class Member(models.Model):
     class Meta:
         ordering = ('is_representant', 'is_referent')
 
+class SomEnergiaAbsenceType(Base):
 
-class SomEnergiaAbsenceType(EventType):
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_("Absece type name"),
+        help_text=_("Absece type name")
+    )
+
+    description = models.CharField(
+        max_length=250,
+        verbose_name=_("Absece type description"),
+        help_text=_("Absece type description")
+    )
 
     # TEET si fos +1 el div no sumari i diss si
     spend_days = models.IntegerField(   # Possible (-1 spend / 0 not / +1 add)
@@ -249,7 +257,7 @@ class SomEnergiaAbsenceType(EventType):
             absence.save()
 
 
-class SomEnergiaAbsence(Event):
+class SomEnergiaAbsence(Base):
 
     absence_type = models.ForeignKey(
         SomEnergiaAbsenceType,
@@ -268,11 +276,17 @@ class SomEnergiaAbsence(Event):
 
     def save(self, *args, **kwargs):
 
-        self.event_type = self.absence_type
-        super(SomEnergiaAbsence, self).save(*args, **kwargs)
+class SomEnergiaOccurrence(Base):
 
+    start_time = models.DateTimeField(
+        verbose_name=_("Start time occurrence"),
+        help_text=_("Date when this occurrence end")
+    )
 
-class SomEnergiaOccurrence(Occurrence):
+    end_time = models.DateTimeField(
+        verbose_name=_("End time occurrence"),
+        help_text=_("Date when this occurrence end")
+    )
 
     absence = models.ForeignKey(
         SomEnergiaAbsence,

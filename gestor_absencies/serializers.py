@@ -95,17 +95,19 @@ class VacationPolicySerializer(serializers.HyperlinkedModelSerializer):
 
 class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
 
-    label = serializers.CharField(required=False, max_length=50)
+    description = serializers.CharField(required=False)
 
     class Meta:
         model = SomEnergiaAbsenceType
         fields = [
             'id',
-            'abbr',
-            'label',
+            'name',
+            'description',
             'spend_days',
             'max_duration',
-            'min_duration'
+            'min_duration',
+            'max_spend',
+            'min_spend'
         ]
 
 

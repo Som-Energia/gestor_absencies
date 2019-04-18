@@ -9,11 +9,12 @@ from gestor_absencies.tests.test_helper import (
 class AdminTest(TestCase):
     def setUp(self):
         self.test_absencetype = create_absencetype(
-            abbr='vacn',
-            label='Vacances',
+            name='Vacances',
+            description='Holiday time!',
             spend_days=1,
             min_duration=0.5,
             max_duration=-1,
+            created_by=self.test_admin
         )
         self.id_absencetype = self.test_absencetype.pk
         self.base_url = reverse('absencetype')
@@ -33,11 +34,13 @@ class AdminTest(TestCase):
                     'next': None,
                     'previous': None,
                     'results':
-                    [{'abbr': 'vacn',
-                      'label': 'Vacances',
+                    [{'name': 'Vacances',
+                      'description': 'Holiday time!',
                       'spend_days': 1,
                       'min_duration': '0.5',
                       'max_duration': '-1.0',
+                      'min_spend': '0.5',
+                      'max_spend': '-1.0',
                       'id': self.id_absencetype
                       }]
                     }
@@ -50,11 +53,13 @@ class AdminTest(TestCase):
             '/'.join([self.base_url, str(self.id_absencetype)])
         )
 
-        expected = {'abbr': 'vacn',
-                    'label': 'Vacances',
+        expected = {'name': 'Vacances',
+                    'description': 'Holiday time!',
                     'spend_days': 1,
                     'min_duration': '0.5',
                     'max_duration': '-1.0',
+                    'min_spend': '0.5',
+                    'max_spend': '-1.0',
                     'id': self.id_absencetype
                     }
         self.assertEqual(response.status_code, 200)
@@ -62,11 +67,13 @@ class AdminTest(TestCase):
 
     def test__absencetype_post__admin(self):
         body = {
-            'abbr': 'baiA',
-            'label': 'baixa A',
+            'name': 'baiA',
+            'description': 'baixa A',
             'spend_days': 0,
             'min_duration': 1,
             'max_duration': 3,
+            'min_spend': 2,
+            'max_spend': 4
         }
         self.client.login(username='admin', password='password')
         response = self.client.post(
@@ -74,16 +81,18 @@ class AdminTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['abbr'], 'baiA')
-        self.assertEqual(response.json()['label'], 'baixa A')
+        self.assertEqual(response.json()['name'], 'baiA')
+        self.assertEqual(response.json()['description'], 'baixa A')
         self.assertEqual(response.json()['spend_days'], 0)
         self.assertEqual(response.json()['min_duration'], '1.0')
         self.assertEqual(response.json()['max_duration'], '3.0')
+        self.assertEqual(response.json()['min_spend'], '2.0')
+        self.assertEqual(response.json()['max_spend'], '4.0')
 
     def test__absencetype_put__admin(self):
         self.client.login(username='admin', password='password')
         body = {
-            'abbr': 'vacn',
+            'name': 'Vacances',
             'spend_days': 1,
             'min_duration': 3,
             'max_duration': 10,
@@ -94,11 +103,13 @@ class AdminTest(TestCase):
             content_type='application/json'
         )
 
-        expected = {'abbr': 'vacn',
-                    'label': 'Vacances',
+        expected = {'name': 'Vacances',
+                    'description': 'Holiday time!',
                     'spend_days': 1,
                     'min_duration': '3.0',
                     'max_duration': '10.0',
+                    'min_spend': '0.5',
+                    'max_spend': '-1.0',
                     'id': self.id_absencetype
                     }
         self.assertEqual(response.status_code, 200)

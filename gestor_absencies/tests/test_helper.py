@@ -65,27 +65,35 @@ def create_vacationpolicy(description, created_by, name='normal', holidays=25):
     return vacationpolicy
 
 
-def create_absencetype(abbr, label, spend_days, min_duration, max_duration):
+def create_absencetype(name, description, spend_days, min_duration, max_duration, created_by):
     absencetype = SomEnergiaAbsenceType(
-        abbr=abbr,
-        label=label,
+        name=name,
+        description=description,
         spend_days=spend_days,
         min_duration=min_duration,
         max_duration=max_duration,
+        min_spend=min_duration,
+        max_spend=max_duration,
+        created_by=created_by,
+        modified_by=created_by
     )
     absencetype.save()
     return absencetype
 
 
-def create_occurrence(absence_type, worker, start_time, end_time):
+def create_occurrence(absence_type, worker, start_time, end_time, created_by=None):
     absence = SomEnergiaAbsence.objects.all().filter(
         worker=worker,
         absence_type=absence_type
     )[0]
+    if not created_by:
+        created_by = worker
     occurrence = SomEnergiaOccurrence(
         absence=absence,
         start_time=start_time,
-        end_time=end_time
+        end_time=end_time,
+        created_by=created_by,
+        modified_by=created_by
     )
     occurrence.save()
     return occurrence
