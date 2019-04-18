@@ -137,6 +137,42 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), ['Incorrect occurrence'])
 
+    def test__post_occurrence_today(self):
+        start_time = (dt.now() - td(hours=3)).replace(microsecond=0)
+        body = {
+            'absence_type': self.id_absencetype,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 3, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], self.id_absencetype)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                (calculate_occurrence_dates(start_time, 3, 0)).replace(
+                    hour=17,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+
     def test__post_occurrence__generate_holidays(self):
         absence_type = create_absencetype(
             name='Escola',
@@ -608,20 +644,84 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(self.test_admin.holidays, 22)
 
     def test__cant_delete_started_occurrence(self):
-        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=1)).replace(hour=10, microsecond=0)
         self.new_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
             worker=self.test_admin,
             start_time=start_time,
             end_time=calculate_occurrence_dates(start_time, 3, 0)
         )
-        self.new_occurrence.save()
         self.new_occurrence.start_time = (dt.now() + td(days=-1)).replace(microsecond=0)
 
         with self.assertRaises(ValidationError) as ctx:
             self.new_occurrence.delete()
         self.assertEqual(ctx.exception.message, 'Can not remove a started occurrence')
 
+    def test__post__occurrence_between_other_occurrences_split(self):
+        absence_type = create_absencetype(
+            name='Baixa M',
+            description='Baixa',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 1, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )),
+            2
+        )#REFACTOR WITH LOGIN
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )[0].somenergiaoccurrence_set.all()),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=self.test_absencetype
+            )[0].somenergiaoccurrence_set.all()),
+            2
+        )
+        self.assertEqual(
+            SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=self.test_absencetype
+            )[0].somenergiaoccurrence_set.all()[0].end_time,
+            (start_time - td(days=1)).replace(hour=17)
+        )
+        self.assertEqual(
+            SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=self.test_absencetype
+            )[0].somenergiaoccurrence_set.all()[1].start_time,
+            (calculate_occurrence_dates(start_time, 1, 0) + td(days=1)).replace(hour=9)
+        )
+
+    def tearDown(self):
+        self.test_vacationpolicy.delete()
+        self.test_admin.delete()
+        self.test_absencetype.delete()
 
 # TODO:
 

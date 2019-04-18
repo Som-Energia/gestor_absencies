@@ -90,6 +90,17 @@ class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
     queryset = SomEnergiaAbsenceType.objects.all()
     serializer_class = SomEnergiaAbsenceTypeSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(
+            created_by=self.request.user,
+            modified_by=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            modified_by=self.request.user
+        )
+
 
 class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
     queryset = SomEnergiaOccurrence.objects.all()
@@ -105,6 +116,19 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
             headers=headers
         )
+
+    def perform_create(self, serializer):
+        if self.request.user.is_superuser:
+            serializer.save(
+                created_by=self.request.user,
+                modified_by=self.request.user
+            )
+            # TODO: Add create_by, modified_time...
+
+    def perform_update(self, serializer):
+        if self.request.user == self.get_object().absence.worker or self.request.user.is_superuser:
+            serializer.save()
+            # TODO: modified_time...
 
     def perform_destroy(self, instance):
         try:

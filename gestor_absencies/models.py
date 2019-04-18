@@ -159,9 +159,6 @@ class Team(Base):
 
     members = models.ManyToManyField(Worker, through='Member')
 
-    # def __repr__(self):
-    #     return self.name
-
     class Meta:
         ordering = ('name',)
 
@@ -205,8 +202,7 @@ class SomEnergiaAbsenceType(Base):
         help_text=_("Absece type description")
     )
 
-    # TEET si fos +1 el div no sumari i diss si
-    spend_days = models.IntegerField(   # Possible (-1 spend / 0 not / +1 add)
+    spend_days = models.IntegerField(
         default=0,
         verbose_name=_("Computation days"),
         help_text=_("")
@@ -267,6 +263,7 @@ class SomEnergiaAbsenceType(Base):
     def __str__(self):
         return self.name
 
+
 class SomEnergiaAbsence(Base):
 
     absence_type = models.ForeignKey(
@@ -284,7 +281,9 @@ class SomEnergiaAbsence(Base):
         help_text=_("")
     )
 
-    def save(self, *args, **kwargs):
+    def __str__(self):
+        return (str(self.worker) + ' - ' + str(self.absence_type))
+
 
 class SomEnergiaOccurrence(Base):
 
@@ -330,30 +329,13 @@ class SomEnergiaOccurrence(Base):
 
         return days
 
-    def clean_fields(self, exclude=None, *args, **kwargs):
-        super().clean_fields(exclude=exclude)
-
-        duration = abs(self.day_counter())
-        if ((self.absence.absence_type.max_duration != -1 and
-             duration > self.absence.absence_type.max_duration) or
-                duration < self.absence.absence_type.min_duration):
-                    raise ValidationError(_('Incorrect duration'))
-        elif self.start_time.replace(tzinfo=None) < datetime.datetime.now():
-                raise ValidationError(_('Passed occurrence'))
-
     def save(self, *args, **kwargs):
 
         self.full_clean()
-
-        duration = self.day_counter()
-        if duration < 0 and self.absence.worker.holidays < abs(duration):
-            raise ValidationError(_('Worker do not have enough holidays'))
-
-        self.event = self.absence
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)
 
+        duration = self.day_counter()
         if self.absence.absence_type.spend_days != 0:
-            # self.absence.worker.holidays = F('holidays') + duration # TODO: more performance
             self.absence.worker.holidays += Decimal(duration)
             self.absence.worker.save()
 
@@ -363,8 +345,7 @@ class SomEnergiaOccurrence(Base):
             raise ValidationError(_('Can not remove a started occurrence'))
 
         if self.absence.absence_type.spend_days != 0:
-            # self.absence.worker.holidays = F('holidays') - self.day_counter() # TODO: more performance
             self.absence.worker.holidays -= Decimal(self.day_counter())
             self.absence.worker.save()
 
-        super(SomEnergiaOccurrence, self).save(*args, **kwargs)
+        super(SomEnergiaOccurrence, self).delete(*args, **kwargs)
