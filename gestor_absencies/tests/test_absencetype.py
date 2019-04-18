@@ -125,5 +125,112 @@ class AdminTest(TestCase):
         )
         self.assertEqual(response.status_code, 204)
 
+    def test__absencetype_list__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.get(
+            self.base_url
+        )
+
+        expected = {'count': 1,
+                    'next': None,
+                    'previous': None,
+                    'results':
+                    [{'name': 'Vacances',
+                      'description': 'Holiday time!',
+                      'spend_days': 1,
+                      'min_duration': '0.5',
+                      'max_duration': '-1.0',
+                      'min_spend': '0.5',
+                      'max_spend': '-1.0',
+                      'id': self.id_absencetype
+                      }]
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+    def test__absencetype_get__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.get(
+            '/'.join([self.base_url, str(self.id_absencetype)])
+        )
+
+        expected = {'name': 'Vacances',
+                    'description': 'Holiday time!',
+                    'spend_days': 1,
+                    'min_duration': '0.5',
+                    'max_duration': '-1.0',
+                    'min_spend': '0.5',
+                    'max_spend': '-1.0',
+                    'id': self.id_absencetype
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+    def test__absencetype_post__worker(self):
+        body = {
+            'name': 'baiA',
+            'description': 'baixa A',
+            'spend_days': 0,
+            'min_duration': 1,
+            'max_duration': 3,
+            'min_spend': 2,
+            'max_spend': 4
+        }
+        self.client.login(username='username', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__absencetype_put__worker(self):
+        self.client.login(username='username', password='password')
+        body = {
+            'name': 'Vacances',
+            'spend_days': 1,
+            'min_duration': 3,
+            'max_duration': 10,
+        }
+        response = self.client.put(
+            '/'.join([self.base_url, str(self.id_absencetype)]),
+            data=body,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__absencetype_delete__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.delete(
+            '/'.join([self.base_url, str(self.id_absencetype)])
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__absencetype_post_set_create_modified_params(self):
+        pass
+
+    def test__absencetype_put_set_modified_params(self):
+        pass
+
     def tearDown(self):
         self.test_absencetype.delete()
+
+
+# TODO: Tests
+
+# Create SomEnergiaAbsenceType create her SomEnergiaAbsences
+# With unexpected body params no raise error
+# Can't delete a used SomEnergiaAbsenceType (Relation with Occurrences)
