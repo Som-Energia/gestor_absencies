@@ -225,12 +225,48 @@ class AdminTest(TestCase):
     def test__absencetype_put_set_modified_params(self):
         pass
 
+    def test__post__create_her_somenergiaabcences(self):
+        #create_worker(username='ronald')
+        body = {
+            'name': 'baiR',
+            'description': 'baixa A',
+            'spend_days': 0,
+            'min_duration': 1,
+            'max_duration': 3,
+            'min_spend': 2,
+            'max_spend': 4
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsenceType.objects.all().filter(name='baiR')),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaAbsenceType.objects.all().filter(name='baiR')[0].
+                somenergiaabsence_set.all()),
+            2
+        )
+        self.assertEqual(
+            SomEnergiaAbsenceType.objects.all().filter(name='baiR')[0].
+                somenergiaabsence_set.all()[0].worker.username,
+            'admin'
+        )
+        self.assertEqual(
+            SomEnergiaAbsenceType.objects.all().filter(name='baiR')[0].
+                somenergiaabsence_set.all()[1].worker.username,
+            'username'
+        )
+
     def tearDown(self):
         self.test_absencetype.delete()
 
 
 # TODO: Tests
 
-# Create SomEnergiaAbsenceType create her SomEnergiaAbsences
 # With unexpected body params no raise error
 # Can't delete a used SomEnergiaAbsenceType (Relation with Occurrences)

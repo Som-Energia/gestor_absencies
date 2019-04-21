@@ -68,6 +68,12 @@ class Worker(AbstractUser):
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='view_vacationpolicy')
         self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='view_somenergiaoccurrence')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='add_somenergiaoccurrence')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='delete_somenergiaoccurrence')
+        self.user_permissions.add(permission)# TODO: refactor
 
         # TODO: I per cada save() es tornen a crear les relacions?
         absence_type_list = SomEnergiaAbsenceType.objects.all()

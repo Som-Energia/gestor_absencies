@@ -2,9 +2,11 @@ from django.test import TestCase
 from os.path import join
 from django.urls import reverse
 from gestor_absencies.tests.test_helper import (
+    create_absencetype,
     create_worker,
     create_vacationpolicy
 )
+from gestor_absencies.models import Worker
 
 
 class AdminTest(TestCase):
@@ -194,7 +196,7 @@ class AdminTest(TestCase):
             {'detail': 'You do not have permission to perform this action.'}
         )
 
-    def test__worker_cant_put_email__worker(self):
+    def test__worker_cant_put_another_email__worker(self):
         second_worker = create_worker(username='new_worker')
         self.client.login(username='username', password='password')
         body = {
@@ -203,7 +205,6 @@ class AdminTest(TestCase):
             'last_name': 'last_name',
             'email': 'newmail@example.com'
         }
-
         response = self.client.put(
             join(self.base_url, str(second_worker.pk)),
             data=body,
@@ -251,10 +252,60 @@ class AdminTest(TestCase):
         )
 
     def test__worker_need_vacationpolicy(self):
-        pass
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'email': 'newmail@example.com'
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'vacation_policy': ['This field is required.']}
+        )
 
     def test__create_worker_create_her_somenergiaabsences(self):
-        pass
+        absence_type = create_absencetype(
+            name='Baixa defuncio',
+            description='Baixa defuncio',
+            spend_days=0,
+            min_duration=3,
+            max_duration=3,
+            created_by=self.test_admin
+        )
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'email': 'newmail@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(Worker.objects.all().filter(username='Peli')[0].
+                somenergiaabsence_set.all()),
+            1
+        )
+
+    def test__bad_login__response_error(self):
+        login_response = self.login_worker('admin', 'bad_password')
+
+        self.assertEqual(login_response.status_code, 400) #401?
+        self.assertEqual(login_response.json(),
+            {'non_field_errors': ['Unable to log in with provided credentials.']}
+        )
 
     def test__worker_post_set_create_modified_params(self):
         pass

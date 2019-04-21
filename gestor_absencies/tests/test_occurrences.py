@@ -434,7 +434,7 @@ class SomEnergiaOccurrenceTest(TestCase):
             max_duration=-1,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=2)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
             'worker': self.id_admin,
@@ -658,7 +658,7 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(ctx.exception.message, 'Can not remove a started occurrence')
 
     def test__post__occurrence_between_other_occurrences_split(self):
-        start_time = (dt.now() + td(days=4)).replace(hour=10, microsecond=0)
+        start_time = (dt.now() + td(days=2)).replace(hour=10, microsecond=0)
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -719,6 +719,62 @@ class SomEnergiaOccurrenceTest(TestCase):
             (calculate_occurrence_dates(start_time, 1, 0) + td(days=1)).replace(hour=9, minute=0, second=0)
         )
 
+    def test__worker_cant_create_another_occurrence_worker(self):
+        create_worker()
+        start_time = (dt.now() + td(days=2)).replace(hour=10, microsecond=0)
+        body = {
+            'absence_type': self.test_absencetype.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 1, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='username', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__worker_can_delete_her_occurrences(self):
+        worker = create_worker()
+        start_time = (dt.now() + td(days=1)).replace(hour=10, microsecond=0, minute=0)
+        occurrence = create_occurrence(
+            absence_type=self.test_absencetype,
+            worker=worker,
+            start_time=start_time,
+            end_time=calculate_occurrence_dates(
+                self.testoccurrence_start_time, 3, 0
+            )
+        )
+        self.client.login(username='username', password='password')
+        response = self.client.delete(
+            '/'.join([self.base_url, str(occurrence.pk)])
+        )
+
+        self.assertEqual(response.status_code, 204)
+
+    def test__worker_cant_delete_another_worker_occurrences(self):
+        worker = create_worker()
+        print('___ test__worker_cant_delete_another_worker_occurrences __')
+        self.client.login(username='username', password='password')
+        response = self.client.delete(
+            '/'.join([self.base_url, str(self.id_occurrence)])
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
     def tearDown(self):
         self.test_vacationpolicy.delete()
         self.test_admin.delete()
@@ -726,13 +782,9 @@ class SomEnergiaOccurrenceTest(TestCase):
 
 # TODO:
 
-# test create other worker occurrence
 # test create with other occurrence at same time
 
 # test delete generate (spend_days=1) without enough holidays
-# test delete own occurrence - worker
-# test delete other worker occurrence's (worker)
-# test delete other worker occurrence's (admin)
 
 
 # duration != compute days

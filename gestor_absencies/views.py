@@ -26,6 +26,8 @@ from rest_framework import status
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
+from rest_framework.exceptions import PermissionDenied
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,6 +55,8 @@ class WorkerViewSet(viewsets.ModelViewSet):
         if self.request.user == self.get_object() or self.request.user.is_superuser:
             serializer.save()
             # TODO: modified_time...
+        else:
+            raise PermissionDenied()
 
 
 class TeamViewSet(viewsets.ModelViewSet):
@@ -137,12 +141,14 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        if self.request.user.is_superuser:
+        if self.request.user.is_superuser or self.request.user.pk == self.request.data['worker']:
             serializer.save(
                 created_by=self.request.user,
                 modified_by=self.request.user
             )
             # TODO: Add create_by, modified_time...
+        else:
+            raise PermissionDenied()
 
     def perform_update(self, serializer):
         if self.request.user == self.get_object().absence.worker or self.request.user.is_superuser:
@@ -150,7 +156,10 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             # TODO: modified_time...
 
     def perform_destroy(self, instance):
-        try:
-            instance.delete()
-        except ValidationError:
-            raise serializers.ValidationError('Can not delete')
+        if self.request.user == instance.absence.worker or self.request.user.is_superuser:
+            try:
+                instance.delete()
+            except ValidationError:
+                raise serializers.ValidationError('Can not delete')
+        else:
+            raise PermissionDenied()
