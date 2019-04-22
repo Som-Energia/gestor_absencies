@@ -129,6 +129,22 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
     queryset = SomEnergiaOccurrence.objects.all()
     serializer_class = SomEnergiaOccurrenceSerializer
 
+    def get_queryset(self):
+        queryset = SomEnergiaOccurrence.objects.all()
+        worker = self.request.query_params.get('worker')
+        team = self.request.query_params.get('team')
+
+        if worker:
+            absences = SomEnergiaAbsence.objects.all().filter(worker=worker)
+            queryset = queryset.filter(absence__in=absences)
+        elif team:
+            members = Member.objects.all().filter(team=team)
+            workers = [member.worker for member in members]
+            absences = SomEnergiaAbsence.objects.all().filter(worker__in=workers)
+            queryset = queryset.filter(absence__in=absences)
+
+        return queryset
+
     def create(self, request, *args, **kwargs):
         serializer = CreateSomEnergiaOccurrenceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

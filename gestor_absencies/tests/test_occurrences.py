@@ -9,7 +9,9 @@ from gestor_absencies.tests.test_helper import (
     create_absencetype,
     create_occurrence,
     create_vacationpolicy,
-    create_worker
+    create_worker,
+    create_team,
+    create_member
 )
 
 from gestor_absencies.models import SomEnergiaAbsence
@@ -70,6 +72,82 @@ class SomEnergiaOccurrenceTest(TestCase):
         )
         self.assertEqual(
             response.json()['results'][0]['worker'], self.id_admin
+        )
+        self.assertEqual(
+            response.json()['results'][0]['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(self.testoccurrence_start_time)
+        )
+        self.assertEqual(
+            response.json()['results'][0]['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                calculate_occurrence_dates(self.testoccurrence_start_time, 3, 0)
+            )
+        )
+
+    def test__list_occurrences_with_worker_filter(self):
+        worker = create_worker()
+        self.test_occurrence = create_occurrence(
+            absence_type=self.test_absencetype,
+            worker=worker,
+            start_time=self.testoccurrence_start_time,
+            end_time=calculate_occurrence_dates(
+                self.testoccurrence_start_time, 3, 0
+            )
+        )
+
+        self.client.login(username='admin', password='password')
+        response = self.client.get(
+            self.base_url, {'worker': [worker.pk]}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['next'], None)
+        self.assertEqual(response.json()['previous'], None)
+        self.assertEqual(
+            response.json()['results'][0]['absence_type'], self.id_absencetype
+        )
+        self.assertEqual(
+            response.json()['results'][0]['worker'], worker.pk
+        )
+        self.assertEqual(
+            response.json()['results'][0]['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(self.testoccurrence_start_time)
+        )
+        self.assertEqual(
+            response.json()['results'][0]['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                calculate_occurrence_dates(self.testoccurrence_start_time, 3, 0)
+            )
+        )
+
+    def test__list_occurrences_with_team_filter(self):
+        worker = create_worker()
+        team = create_team(created_by=self.test_admin)
+        create_member(worker=worker, team=team)
+        self.test_occurrence = create_occurrence(
+            absence_type=self.test_absencetype,
+            worker=worker,
+            start_time=self.testoccurrence_start_time,
+            end_time=calculate_occurrence_dates(
+                self.testoccurrence_start_time, 3, 0
+            )
+        )
+
+        self.client.login(username='admin', password='password')
+        response = self.client.get(
+            self.base_url, {'team': [team.pk]}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['next'], None)
+        self.assertEqual(response.json()['previous'], None)
+        self.assertEqual(
+            response.json()['results'][0]['absence_type'], self.id_absencetype
+        )
+        self.assertEqual(
+            response.json()['results'][0]['worker'], worker.pk
         )
         self.assertEqual(
             response.json()['results'][0]['start_time'],
@@ -763,7 +841,6 @@ class SomEnergiaOccurrenceTest(TestCase):
 
     def test__worker_cant_delete_another_worker_occurrences(self):
         worker = create_worker()
-        print('___ test__worker_cant_delete_another_worker_occurrences __')
         self.client.login(username='username', password='password')
         response = self.client.delete(
             '/'.join([self.base_url, str(self.id_occurrence)])

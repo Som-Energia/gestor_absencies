@@ -196,10 +196,13 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
 
         #Split occurrence
+        absences = SomEnergiaAbsence.objects.all().filter(
+            worker=validated_data['worker']
+        ).all()
         occurrences = SomEnergiaOccurrence.objects.all().filter(
             start_time__lt=start_datetime,
             end_time__day__gte=end_datetime.day,
-            #TODO: add property
+            absence__in=absences
         ).all()
         if occurrences:
             for o in occurrences:
