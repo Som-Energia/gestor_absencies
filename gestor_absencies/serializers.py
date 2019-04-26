@@ -196,13 +196,10 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
 
         #Split occurrence
-        absences = SomEnergiaAbsence.objects.all().filter(
-            worker=validated_data['worker']
-        ).all()
         occurrences = SomEnergiaOccurrence.objects.all().filter(
             start_time__lt=start_datetime,
-            end_time__day__gte=end_datetime.day,
-            absence__in=absences
+            end_time__gte=end_datetime,
+            absence__worker__id=validated_data['worker']
         ).all()
         if occurrences:
             for o in occurrences:
@@ -213,7 +210,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 modified_by_occurrence = o.modified_by
                 o.delete()
 
-                if start_occurrence.day < start_datetime.day:
+                if start_occurrence < start_datetime:
                     first_occurrence = SomEnergiaOccurrence(
                         start_time=start_occurrence,
                         end_time=(start_datetime - td(days=1)).replace(hour=17),
@@ -222,7 +219,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                         modified_by=modified_by_occurrence
                     )
                     first_occurrence.save()
-                if end_occurrence.day > end_datetime.day:
+                if end_occurrence > end_datetime:
                     second_occurrence = SomEnergiaOccurrence(
                         start_time=(end_datetime + td(days=1)).replace(hour=9),
                         end_time=end_occurrence,

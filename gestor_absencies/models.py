@@ -282,6 +282,7 @@ class SomEnergiaAbsence(Base):
     worker = models.ForeignKey(
         Worker,
         null=True,
+        related_name='absence',
         on_delete=models.CASCADE,
         verbose_name=_("Worker"),
         help_text=_("")
@@ -306,6 +307,7 @@ class SomEnergiaOccurrence(Base):
     absence = models.ForeignKey(
         SomEnergiaAbsence,
         # editable=False,
+        related_name='occurrence',
         on_delete=models.CASCADE,
         verbose_name=_("Absence"),
         help_text=_("")

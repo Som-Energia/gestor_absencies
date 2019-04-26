@@ -36,6 +36,7 @@ class AdminTest(TestCase):
 
         self.assertEqual(login_response.status_code, 200)
         self.assertTrue(login_response.json()['token'] is not '')
+        self.assertEqual(login_response.json()['user_id'], self.test_admin.id)
 
     def test__worker_list__admin(self):
         self.client.login(username='admin', password='password')

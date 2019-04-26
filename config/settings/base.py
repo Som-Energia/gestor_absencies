@@ -83,7 +83,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
-    'JWT_VERIFY_EXPIRATION': False
+    'JWT_VERIFY_EXPIRATION': False,
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'gestor_absencies.common.utils.jwt_response_token_user_id'
 }
 
 LANGUAGE_CODE = 'en-us'
