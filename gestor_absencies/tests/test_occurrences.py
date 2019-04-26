@@ -46,14 +46,14 @@ class SomEnergiaOccurrenceSetupMixin(object):
         self.test_absence = self.test_admin.absence.all()[0]
         self.id_absence = self.test_absence.pk
 
-        self.testoccurrence_start_time = (dt.now() + td(days=3)).replace(hour=10, microsecond=0, minute=0)
+        self.testoccurrence_start_time = (dt.now() + td(days=2)).replace(hour=9, microsecond=0, minute=0, second=0)
         self.test_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
             worker=self.test_admin,
             start_time=self.testoccurrence_start_time,
             end_time=calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
-            )
+            ).replace(hour=17)
         )
         self.id_occurrence = self.test_occurrence.pk
 
@@ -89,7 +89,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(
             response.json()['results'][0]['end_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
-                calculate_occurrence_dates(self.testoccurrence_start_time, 3, 0)
+                calculate_occurrence_dates(self.testoccurrence_start_time, 3, 0).replace(hour=17)
             )
         )
 
@@ -730,6 +730,349 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 absence__absence_type=self.test_absencetype
             )[1].start_time,
             (calculate_occurrence_dates(start_time, 1, 0) + td(days=1)).replace(hour=9, minute=0, second=0)
+        )
+
+    def test__post__occurrence_beginning_coincide_with_other_occurrences_override_other_occurrence(self):
+        absence_type = create_absencetype(
+            name='Baixa M',
+            description='Baixa',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': self.testoccurrence_start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(self.testoccurrence_start_time, 1, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )),
+            2
+        )#REFACTOR WITH LOGIN
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            1
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].start_time,
+            self.testoccurrence_start_time.replace(hour=9, minute=0, second=0)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].start_time,
+            (calculate_occurrence_dates(self.testoccurrence_start_time, 1, 0) + td(days=1))
+        )
+
+    def test__post__occurrence_end_coincide_with_other_occurrences_override_other_occurrence(self):
+        start_time = (self.testoccurrence_start_time + td(days=2)).replace(hour=9, microsecond=0, second=0)
+        absence_type = create_absencetype(
+            name='Baixa M',
+            description='Baixa',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 1, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )),
+            2
+        )#REFACTOR WITH LOGIN
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            1
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].start_time,
+            start_time
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].end_time,
+            (start_time - td(days=1)).replace(hour=17, minute=0, second=0)
+        )
+
+    def test__post__occurrence_first_half_day_beginning_coincide_with_other_occurrences_override_other_occurrence(self):
+        absence_type = create_absencetype(
+            name='Baixa M',
+            description='Baixa',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': self.testoccurrence_start_time,
+            'start_morning': True,
+            'start_afternoon': False,
+            'end_time': calculate_occurrence_dates(self.testoccurrence_start_time, 1, 0),
+            'end_morning': True,
+            'end_afternoon': False
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )),
+            2
+        )#REFACTOR WITH LOGIN
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            1
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].end_time,
+            self.testoccurrence_start_time.replace(hour=13, minute=0, second=0)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].start_time,
+            self.testoccurrence_start_time.replace(hour=13)
+        )
+    def test__post__occurrence_second_half_day_beginning_coincide_with_other_occurrences_override_other_occurrence(self):
+        absence_type = create_absencetype(
+            name='Baixa M',
+            description='Baixa',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': self.testoccurrence_start_time,
+            'start_morning': False,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(self.testoccurrence_start_time, 1, 0),
+            'end_morning': False,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )),
+            2
+        )#REFACTOR WITH LOGIN
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            2
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].start_time,
+            self.testoccurrence_start_time.replace(hour=13, minute=0, second=0)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].end_time,
+            self.testoccurrence_start_time.replace(hour=13)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[1].start_time,
+            (self.testoccurrence_start_time + td(days=1)).replace(hour=9)
+        )
+
+    def test__post__occurrence_first_half_day_end_coincide_with_other_occurrences_override_other_occurrence(self):
+        start_time = (self.testoccurrence_start_time + td(days=2)).replace(hour=9, microsecond=0, second=0)
+        absence_type = create_absencetype(
+            name='Baixa M',
+            description='Baixa',
+            spend_days=0,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': False,
+            'end_time': calculate_occurrence_dates(start_time, 1, 0),
+            'end_morning': True,
+            'end_afternoon': False
+        }
+
+        print(
+            'test__post__occurrence_first_half_day_end_coincide_with_other_occurrences_override_other_occurrence ++++++++++++++++++',
+
+            )
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        print(
+            len(SomEnergiaOccurrence.objects.all()),
+            ' primera --->>> ',
+            SomEnergiaOccurrence.objects.all()[0].start_time,
+            ' ',
+            SomEnergiaOccurrence.objects.all()[0].end_time,
+            ' ',
+            SomEnergiaOccurrence.objects.all()[0].absence.worker.id,
+        )
+        print(
+            ' segona --->>> ',
+            SomEnergiaOccurrence.objects.all()[1].start_time,
+            ' ',
+            SomEnergiaOccurrence.objects.all()[1].end_time,
+            ' ',
+            SomEnergiaOccurrence.objects.all()[1].absence.worker.id,
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.all().filter(
+                worker=self.test_admin,
+                absence_type=absence_type
+            )),
+            2
+        )#REFACTOR WITH LOGIN
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            2
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].start_time,
+            start_time
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[1].start_time,
+            start_time.replace(hour=13, minute=0, second=0)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].end_time,
+            (start_time - td(days=1)).replace(hour=17, minute=0, second=0)
         )
 
     def test__worker_cant_create_another_occurrence_worker(self):
