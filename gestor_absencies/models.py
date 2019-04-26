@@ -256,8 +256,7 @@ class SomEnergiaAbsenceType(Base):
 
         super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
 
-        worker_list = Worker.objects.all()
-        for worker in worker_list:
+        for worker in Worker.objects.all():
             absence = SomEnergiaAbsence(
                 absence_type=self,
                 worker=worker,
@@ -274,6 +273,7 @@ class SomEnergiaAbsence(Base):
 
     absence_type = models.ForeignKey(
         SomEnergiaAbsenceType,
+        related_name='absence',
         on_delete=models.CASCADE,
         verbose_name=_("Absence Type"),
         help_text=_("")

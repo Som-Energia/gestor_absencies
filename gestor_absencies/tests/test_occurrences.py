@@ -17,14 +17,14 @@ from gestor_absencies.tests.test_helper import (
 from gestor_absencies.models import SomEnergiaAbsence
 
 
+class SomEnergiaOccurrenceSetupMixin(object):
 
-class SomEnergiaOccurrenceTest(TestCase):
     def setUp(self):
         self.base_url = reverse('absences')
 
         self.test_admin = create_worker(username='admin', is_admin=True)
         self.id_admin = self.test_admin.pk
-        
+
         self.test_vacationpolicy = create_vacationpolicy(
             description='normal vacation policy',
             created_by=self.test_admin
@@ -46,7 +46,7 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.test_absence = self.test_admin.somenergiaabsence_set.all()[0]
         self.id_absence = self.test_absence.pk
 
-        self.testoccurrence_start_time = (dt.now() + td(days=1)).replace(hour=10, microsecond=0, minute=0)
+        self.testoccurrence_start_time = (dt.now() + td(days=3)).replace(hour=10, microsecond=0, minute=0)
         self.test_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
             worker=self.test_admin,
@@ -56,6 +56,9 @@ class SomEnergiaOccurrenceTest(TestCase):
             )
         )
         self.id_occurrence = self.test_occurrence.pk
+
+
+class SomEnergiaOccurrenceTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
     def test__list_occurrences(self):
         self.client.login(username='admin', password='password')
@@ -512,7 +515,7 @@ class SomEnergiaOccurrenceTest(TestCase):
             max_duration=-1,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=2)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
             'worker': self.id_admin,
@@ -736,7 +739,7 @@ class SomEnergiaOccurrenceTest(TestCase):
         self.assertEqual(ctx.exception.message, 'Can not remove a started occurrence')
 
     def test__post__occurrence_between_other_occurrences_split(self):
-        start_time = (dt.now() + td(days=2)).replace(hour=10, microsecond=0)
+        start_time = (self.testoccurrence_start_time + td(days=1)).replace(hour=10, microsecond=0)
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -853,6 +856,7 @@ class SomEnergiaOccurrenceTest(TestCase):
         )
 
     def tearDown(self):
+        self.test_occurrence.delete()
         self.test_vacationpolicy.delete()
         self.test_admin.delete()
         self.test_absencetype.delete()
