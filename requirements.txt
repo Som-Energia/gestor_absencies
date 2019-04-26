@@ -4,3 +4,4 @@ djangorestframework==3.9.1
 pyyaml
 djangorestframework-jwt
 python-dateutil
+django-cors-headers
