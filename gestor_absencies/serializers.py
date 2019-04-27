@@ -20,7 +20,13 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Worker
         fields = [
-            'id', 'first_name', 'last_name', 'email', 'username'
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'username',
+            'category',
+            'gender',
         ]
 
 
