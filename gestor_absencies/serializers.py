@@ -193,20 +193,22 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         if ((occurrence.absence.absence_type.max_duration != -1 and
              abs(duration) > occurrence.absence.absence_type.max_duration) or
                 abs(duration) < occurrence.absence.absence_type.min_duration):
-                    raise serializers.ValidationError('Incorrect occurrence')
+                    raise serializers.ValidationError('Incorrect duration')
         elif occurrence.start_time < dt.now():
-                raise serializers.ValidationError('Incorrect occurrence')
+                raise serializers.ValidationError('Can\'t create a passade occurrence')
         if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
-                raise serializers.ValidationError('Incorrect occurrence')
+                raise serializers.ValidationError('Not enough holidays')
 
 
         #Split occurrence
+        print('--- Before Occurrence Splitter filter ', start_datetime, ' ', end_datetime)
         occurrences = SomEnergiaOccurrence.objects.all().filter(
             start_time__lte=start_datetime,
             end_time__gte=end_datetime,
             absence__worker__id=validated_data['worker']
         ).all()
         if occurrences:
+            print('Inside serializer splitter ')
             for o in occurrences:
                 start_occurrence = o.start_time
                 end_occurrence = o.end_time

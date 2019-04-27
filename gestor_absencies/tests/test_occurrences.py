@@ -173,7 +173,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
     def test__simple_post_occurrence(self):
-        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
             'worker': self.id_admin,
@@ -318,7 +318,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             max_duration=3,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
             'worker': self.id_admin,
@@ -329,6 +329,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'end_morning': True,
             'end_afternoon': True
         }
+        print('test__post_occurrence__substraction_holidays /////////////////')
         self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
@@ -476,7 +477,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             max_duration=-1,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
             'worker': self.id_admin,
@@ -524,7 +525,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             max_duration=-1,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=3)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
             'worker': self.id_admin,
@@ -572,7 +573,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             max_duration=-1,
             created_by=self.test_admin
         )
-        start_time = (dt.now() + td(days=1)).replace(microsecond=0)
+        start_time = (dt.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
             'worker': self.id_admin,
@@ -794,7 +795,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__post__occurrence_end_coincide_with_other_occurrences_override_other_occurrence(self):
-        start_time = (self.testoccurrence_start_time + td(days=2)).replace(hour=9, microsecond=0, second=0)
+        start_time = (self.testoccurrence_start_time + td(days=2))
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -817,6 +818,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         response = self.client.post(
             self.base_url, data=body
         )
+        print(response.json())
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(
@@ -1003,32 +1005,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'end_morning': True,
             'end_afternoon': False
         }
-
-        print(
-            'test__post__occurrence_first_half_day_end_coincide_with_other_occurrences_override_other_occurrence ++++++++++++++++++',
-
-            )
         self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
-        )
-
-        print(
-            len(SomEnergiaOccurrence.objects.all()),
-            ' primera --->>> ',
-            SomEnergiaOccurrence.objects.all()[0].start_time,
-            ' ',
-            SomEnergiaOccurrence.objects.all()[0].end_time,
-            ' ',
-            SomEnergiaOccurrence.objects.all()[0].absence.worker.id,
-        )
-        print(
-            ' segona --->>> ',
-            SomEnergiaOccurrence.objects.all()[1].start_time,
-            ' ',
-            SomEnergiaOccurrence.objects.all()[1].end_time,
-            ' ',
-            SomEnergiaOccurrence.objects.all()[1].absence.worker.id,
         )
 
         self.assertEqual(response.status_code, 201)
@@ -1098,6 +1077,57 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             response.json(),
             {'detail': 'You do not have permission to perform this action.'}
         )
+
+    def test__greater_coincidence_occurrence(self):
+        start_time = (self.testoccurrence_start_time - td(days=1)).replace(hour=9, microsecond=0, second=0)
+        absence_type = create_absencetype(
+            name='Vacances',
+            description='Vacances',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 5, -1),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+
+        print(
+            'test__greater_coincidence_occurrence.-.-.-.-.-.-.-.-.-.-.-',
+
+        )
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], absence_type.pk)
+        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                (calculate_occurrence_dates(start_time, 5, -1)).replace(
+                    hour=17,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(self.test_admin.holidays, 23)
 
 
 class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
