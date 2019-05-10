@@ -225,10 +225,11 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             self.base_url, data=body
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), ['Incorrect occurrence'])
+        self.assertEqual(response.json(), ['Can\'t create a passade occurrence'])
 
     def test__post_occurrence_today(self):
-        start_time = (dt.now() - td(hours=3)).replace(microsecond=0)
+        # start_time = (dt.now() - td(hours=3)).replace(microsecond=0)
+        start_time = (dt.now() - td(minutes=40)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
             'worker': self.id_admin,
@@ -239,6 +240,11 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'end_morning': True,
             'end_afternoon': True
         }
+        print(' /////// test__post_occurrence_today',
+            start_time,
+            ' ',
+            dt.now()
+        )
         self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
@@ -329,7 +335,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'end_morning': True,
             'end_afternoon': True
         }
-        print('test__post_occurrence__substraction_holidays /////////////////')
         self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
@@ -382,7 +387,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         self.test_admin.refresh_from_db()
 
-        expected = ['Incorrect occurrence']
+        expected = ['Not enough holidays']
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), expected)
         self.assertEqual(self.test_admin.holidays, 25)
@@ -463,7 +468,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         self.test_admin.refresh_from_db()
 
-        expected = ['Incorrect occurrence']
+        expected = ['Not enough holidays']
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), expected)
         self.assertEqual(self.test_admin.holidays, 0)
@@ -818,7 +823,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         response = self.client.post(
             self.base_url, data=body
         )
-        print(response.json())
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(
@@ -1099,10 +1103,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'end_afternoon': True
         }
 
-        print(
-            'test__greater_coincidence_occurrence.-.-.-.-.-.-.-.-.-.-.-',
-
-        )
         self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
@@ -1127,7 +1127,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 )
             )
         )
-        self.assertEqual(self.test_admin.holidays, 23)
+        self.assertEqual(self.test_admin.holidays, 20)
 
 
 class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):

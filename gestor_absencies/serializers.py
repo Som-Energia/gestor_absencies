@@ -201,8 +201,8 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
 
         #Split occurrence
-        print('--- Before Occurrence Splitter filter ', start_datetime, ' ', end_datetime)
-        occurrences = SomEnergiaOccurrence.objects.all().filter(
+        # print('--- Before Occurrence Splitter filter ', start_datetime, ' ', end_datetime)
+        occurrences = SomEnergiaOccurrence.objects.filter(
             start_time__lte=start_datetime,
             end_time__gte=end_datetime,
             absence__worker__id=validated_data['worker']
