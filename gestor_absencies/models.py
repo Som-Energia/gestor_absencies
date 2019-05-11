@@ -314,56 +314,6 @@ class SomEnergiaOccurrence(Base):
         help_text=_("")
     )
 
-    # TODO: utils
-    def computable_days_between_dates(self, start_time, end_time, dates_types):
-        return len(list(dateutil.rrule.rrule(
-            dtstart=start_time,
-            until=end_time,
-            freq=dateutil.rrule.DAILY,
-            byweekday=dates_types
-        )))
-
-    # def count_days_between(self, start_time, end_time, dates_types):
-        # print(
-        #         'inside count_days_between ',
-        #         start_time,
-        #         ' ',
-        #         end_time,
-        #         ' ',
-        #         self.start_time,
-        #         ' ',
-        #         self.end_time
-        #     )
-        # if start_time <= self.end_time and start_time >= self.start_time and end_time <= self.end_time and end_time >= self.start_time:
-        #     print(
-        #         'inside count_days_between last if ',
-        #         start_time,
-        #         ' ',
-        #         end_time,
-        #         ' ',
-        #         self.start_time,
-        #         ' ',
-        #         self.end_time
-        #     )
-        #     return self.computable_days_between_dates(
-        #     start_time=start_time,
-        #     end_time=end_time,
-        #     dates_types=dates_types
-        # )
-        # elif start_time <= self.end_time and start_time >= self.start_time:
-        #     return self.computable_days_between_dates(
-        #         start_time=start_time,
-        #         end_time=self.end_time,
-        #         dates_types=dates_types
-        #     )
-        # elif end_time <= self.end_time and end_time >= self.start_time:
-        #     return self.computable_days_between_dates(
-        #         start_time=self.start_time,
-        #         end_time=end_time,
-        #         dates_types=dates_types
-        #     )
-        # return 0
-
     def day_counter(self):
 
         if self.absence.absence_type.spend_days > 0:
@@ -371,29 +321,6 @@ class SomEnergiaOccurrence(Base):
             byweekday = [5, 6]
         else:
             byweekday = [0, 1, 2, 3, 4]
-            # coincident_occurrences = SomEnergiaOccurrence.objects.filter(
-            #     ((Q(start_time__lte=self.end_time) & Q(start_time__gte=self.start_time) & Q(absence__worker=self.absence.worker))
-            #     |
-            #     (Q(end_time__lte=self.end_time) & Q(end_time__gte=self.start_time) & Q(absence__worker=self.absence.worker))
-            #     |
-            #     (Q(start_time__lte=self.start_time) & Q(end_time__gte=self.end_time) & Q(absence__worker=self.absence.worker)))
-            #     & ~Q(id=self.id)
-            # )
-            # coincident_days = 0
-            # for occurrence in coincident_occurrences:
-            #     print(
-            #         'coincident_occurrence ',
-            #         occurrence.start_time,
-            #         ' ',
-            #         occurrence.end_time
-            #     )
-            #     coincident_days += self.count_days_between(
-            #         start_time=occurrence.start_time,
-            #         end_time=occurrence.end_time,
-            #         dates_types=byweekday
-            #     )
-            #     print(coincident_days)
-            # print('outside for ', coincident_days)
 
         days = len(list(dateutil.rrule.rrule(
             dtstart=self.start_time,
@@ -401,7 +328,6 @@ class SomEnergiaOccurrence(Base):
             freq=dateutil.rrule.DAILY,
             byweekday=byweekday
         )))
-        # days -= coincident_days
 
         if self.start_time.hour == 13:
             days -= 0.5

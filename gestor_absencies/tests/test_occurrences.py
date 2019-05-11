@@ -677,6 +677,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__post__occurrence_between_other_occurrences_split(self):
+        
+        #   |----|
+        #   ||||||
         start_time = (self.testoccurrence_start_time + td(days=1)).replace(hour=10, microsecond=0)
         absence_type = create_absencetype(
             name='Baixa M',
@@ -728,7 +731,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 absence__worker=self.test_admin,
                 absence__absence_type=self.test_absencetype
             )[0].end_time,
-            (start_time - td(days=1)).replace(hour=17, minute=0, second=0)
+            (self.testoccurrence_start_time).replace(hour=17, minute=0, second=0)
         )
         self.assertEqual(
             SomEnergiaOccurrence.objects.filter(
@@ -739,6 +742,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__post__occurrence_beginning_coincide_with_other_occurrences_override_other_occurrence(self):
+        
+        #   |----|
+        #   |||--|
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -800,6 +806,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__post__occurrence_end_coincide_with_other_occurrences_override_other_occurrence(self):
+        
+        #   |----|
+        #   |--|||
         start_time = (self.testoccurrence_start_time + td(days=2))
         absence_type = create_absencetype(
             name='Baixa M',
@@ -862,6 +871,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__post__occurrence_first_half_day_beginning_coincide_with_other_occurrences_override_other_occurrence(self):
+        
+        #   |----|
+        #   ||---|
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -921,7 +933,11 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             )[0].start_time,
             self.testoccurrence_start_time.replace(hour=13)
         )
+
     def test__post__occurrence_second_half_day_beginning_coincide_with_other_occurrences_override_other_occurrence(self):
+        
+        #   |----|
+        #   |||--|
         absence_type = create_absencetype(
             name='Baixa M',
             description='Baixa',
@@ -988,8 +1004,18 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             )[1].start_time,
             (self.testoccurrence_start_time + td(days=1)).replace(hour=9)
         )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].end_time,
+            (self.testoccurrence_start_time).replace(hour=13)
+        )
 
     def test__post__occurrence_first_half_day_end_coincide_with_other_occurrences_override_other_occurrence(self):
+        
+        #   |----|   
+        #   |--|||
         start_time = (self.testoccurrence_start_time + td(days=2)).replace(hour=9, microsecond=0, second=0)
         absence_type = create_absencetype(
             name='Baixa M',
@@ -1054,6 +1080,13 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
                 absence__absence_type=self.test_absencetype
+            )[1].end_time,
+            start_time.replace(hour=17, minute=0, second=0)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
             )[0].end_time,
             (start_time - td(days=1)).replace(hour=17, minute=0, second=0)
         )
@@ -1083,6 +1116,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__greater_coincidence_occurrence(self):
+
+        #   |----|
+        # |--------|
         start_time = (self.testoccurrence_start_time - td(days=1)).replace(hour=9, microsecond=0, second=0)
         absence_type = create_absencetype(
             name='Vacances',
@@ -1126,6 +1162,20 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                     second=0
                 )
             )
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            0
         )
         self.assertEqual(self.test_admin.holidays, 20)
 

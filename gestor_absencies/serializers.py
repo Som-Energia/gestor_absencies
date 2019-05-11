@@ -1,9 +1,9 @@
 from datetime import timedelta as td, datetime as dt
-
+from django.db.models import Q
 from django.core.exceptions import ValidationError
 from gestor_absencies.common.datetime_calculator import calculate_datetime
 from rest_framework import serializers
-
+from gestor_absencies.common.utils import computable_days_between_dates, find_concurrence_dates
 from .models import (
     Member,
     SomEnergiaAbsence,
@@ -254,6 +254,39 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                             modified_by=modified_by_occurrence
                         )
                         second_occurrence.save()
+
+        occurrences = SomEnergiaOccurrence.objects.filter(
+            (
+                (Q(start_time__gt=start_datetime)
+                &
+                Q(start_time__lt=end_datetime))
+            |
+                (Q(end_time__gt=start_datetime)
+                &
+                Q(end_time__lt=end_datetime))
+            |
+                (Q(start_time__gt=start_datetime)
+                &
+                Q(end_time__lt=end_datetime))
+            )
+            &
+            Q(absence__worker__id=validated_data['worker'])
+        ).all()
+        if occurrences:
+
+            for o in occurrences:
+                start_concurrence, end_concurrence = find_concurrence_dates(occurrence, o)
+                days = computable_days_between_dates(
+                    start_concurrence,
+                    end_concurrence,
+                    [0,1,2,3,4,5]
+                )
+                o.delete()
+                worker = Worker.objects.filter(
+                    id=validated_data['worker']
+                ).first()
+                worker.holidays += days
+
 
         try:
             occurrence.save()
