@@ -248,23 +248,22 @@ class AdminTest(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(
-            len(SomEnergiaAbsenceType.objects.all().filter(name='baiR')),
+            len(SomEnergiaAbsenceType.objects.filter(name='baiR')),
             1
         )
         self.assertEqual(
-            len(SomEnergiaAbsenceType.objects.all().filter(name='baiR')[0].
-                somenergiaabsence_set.all()),
+            len(SomEnergiaAbsence.objects.filter(absence_type__name='baiR')),
             2
         )
-        self.assertEqual(
-            SomEnergiaAbsenceType.objects.all().filter(name='baiR')[0].
-                somenergiaabsence_set.all()[0].worker.username,
-            'admin'
+        self.assertIsNotNone(
+            SomEnergiaAbsenceType.objects.filter(
+                absence__worker__username='admin'
+            )
         )
-        self.assertEqual(
-            SomEnergiaAbsenceType.objects.all().filter(name='baiR')[0].
-                somenergiaabsence_set.all()[1].worker.username,
-            'username'
+        self.assertIsNotNone(
+            SomEnergiaAbsenceType.objects.filter(
+                absence__worker__username='username'
+            )
         )
 
     def tearDown(self):

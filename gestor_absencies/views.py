@@ -148,7 +148,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = CreateSomEnergiaOccurrenceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        self.perform_create(serializer, request)
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data,
@@ -156,11 +156,12 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer, request):
         if self.request.user.is_superuser or self.request.user.pk == self.request.data['worker']:
             serializer.save(
                 created_by=self.request.user,
-                modified_by=self.request.user
+                modified_by=self.request.user,
+                request=request
             )
             # TODO: Add create_by, modified_time...
         else:

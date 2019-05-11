@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 
-import dateutil
+import dateutil.rrule as rrule
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, Permission
 from django.core.exceptions import ValidationError
@@ -318,14 +318,20 @@ class SomEnergiaOccurrence(Base):
 
         if self.absence.absence_type.spend_days > 0:
             coincident_days = 0
-            byweekday = [5, 6]
+            byweekday = [rrule.SA, rrule.SU]
         else:
-            byweekday = [0, 1, 2, 3, 4]
+            byweekday = [
+                rrule.MO,
+                rrule.TU,
+                rrule.WE,
+                rrule.TH,
+                rrule.FR
+            ]
 
-        days = len(list(dateutil.rrule.rrule(
+        days = len(list(rrule.rrule(
             dtstart=self.start_time,
             until=self.end_time,
-            freq=dateutil.rrule.DAILY,
+            freq=rrule.DAILY,
             byweekday=byweekday
         )))
 

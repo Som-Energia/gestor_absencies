@@ -1,6 +1,7 @@
 from datetime import timedelta as td, datetime as dt
+import dateutil.rrule as rrule
 from django.db.models import Q
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from gestor_absencies.common.datetime_calculator import calculate_datetime
 from rest_framework import serializers
 from gestor_absencies.common.utils import computable_days_between_dates, find_concurrence_dates
@@ -163,6 +164,10 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         return data
 
     def create(self, validated_data):
+        request = validated_data.get('request')
+        user = None
+        if request and hasattr(request, "user"):
+            user = request.user
 
         start_datetime = calculate_datetime(
             dt=validated_data['start_time'],
@@ -177,17 +182,20 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             is_start=False
         )
 
-        absence = SomEnergiaAbsence.objects.all().filter(
-            worker=validated_data['worker'],
-            absence_type=validated_data['absence_type']
-        )[0]
+        try:
+            absence = SomEnergiaAbsence.objects.filter(
+                worker=validated_data['worker'],
+                absence_type=validated_data['absence_type']
+            )[0]
+        except ObjectDoesNotExist as e:
+            raise serializers.ValidationError('Absence not found')
 
         occurrence = SomEnergiaOccurrence(
             start_time=start_datetime,
             end_time=end_datetime,
             absence=absence,
-            created_by=validated_data['created_by'],
-            modified_by=validated_data['modified_by']
+            created_by=user,
+            modified_by=user
         )
         duration = occurrence.day_counter()
         if ((occurrence.absence.absence_type.max_duration != -1 and
@@ -201,14 +209,12 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
 
         #Split occurrence
-        # print('--- Before Occurrence Splitter filter ', start_datetime, ' ', end_datetime)
         occurrences = SomEnergiaOccurrence.objects.filter(
             start_time__lte=start_datetime,
             end_time__gte=end_datetime,
             absence__worker__id=validated_data['worker']
         ).all()
         if occurrences:
-            print('Inside serializer splitter ')
             for o in occurrences:
                 start_occurrence = o.start_time
                 end_occurrence = o.end_time
@@ -255,6 +261,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                         )
                         second_occurrence.save()
 
+        # Override occurrences
         occurrences = SomEnergiaOccurrence.objects.filter(
             (
                 (Q(start_time__gt=start_datetime)
@@ -278,7 +285,13 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 days = computable_days_between_dates(
                     start_concurrence,
                     end_concurrence,
-                    [0,1,2,3,4,5]
+                    [
+                        rrule.MO,
+                        rrule.TU,
+                        rrule.WE,
+                        rrule.TH,
+                        rrule.FR
+                    ]
                 )
                 start_occurrence = o.start_time
                 end_occurrence = o.end_time
@@ -302,7 +315,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                         first_occurrence.save()
                     else:
                         first_occurrence = SomEnergiaOccurrence(
-                            start_time=(start_datetime + td(days=1)).replace(hour=9),
+                            start_time=(end_datetime + td(days=1)).replace(hour=9),
                             end_time=end_occurrence,
                             absence=absence_occurrence,
                             created_by=created_by_occurrence,

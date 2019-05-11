@@ -228,7 +228,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.json(), ['Can\'t create a passade occurrence'])
 
     def test__post_occurrence_today(self):
-        # start_time = (dt.now() - td(hours=3)).replace(microsecond=0)
         start_time = (dt.now() - td(minutes=40)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
@@ -240,11 +239,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'end_morning': True,
             'end_afternoon': True
         }
-        print(' /////// test__post_occurrence_today',
-            start_time,
-            ' ',
-            dt.now()
-        )
         self.client.login(username='admin', password='password')
         response = self.client.post(
             self.base_url, data=body
@@ -1253,6 +1247,83 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             calculate_occurrence_dates(start_time, 3, -1).replace(hour=17)
         )
         self.assertEqual(self.test_admin.holidays, 22)
+
+    def test__start_coincidence_occurrence(self):
+
+        #   |----|
+        # |--||--|
+        start_time = (self.testoccurrence_start_time - td(days=1)).replace(hour=9, microsecond=0, second=0)
+        absence_type = create_absencetype(
+            name='Vacances',
+            description='Vacances',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': self.id_admin,
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 2, -1),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )),
+            1
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].end_time,
+            calculate_occurrence_dates(
+                self.testoccurrence_start_time, 3, 0
+            ).replace(hour=17)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=self.test_absencetype
+            )[0].start_time,
+            (self.testoccurrence_start_time + td(days=1)).replace(hour=9)
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].start_time,
+            start_time
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            )[0].end_time,
+            calculate_occurrence_dates(start_time, 2, -1).replace(hour=17)
+        )
+        self.assertEqual(self.test_admin.holidays, 23)
+
 
 
 class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
