@@ -28,6 +28,7 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
             'username',
             'category',
             'gender',
+            'holidays'
         ]
 
 

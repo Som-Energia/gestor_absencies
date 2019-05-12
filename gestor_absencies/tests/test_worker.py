@@ -55,16 +55,18 @@ class AdminTest(TestCase):
                          'id': self.test_admin.pk,
                          'last_name': 'last_name',
                          'username': 'admin',
+                         'holidays': '0.0',
                          'gender': '',
-                         'category': ''
+                         'category': '',
                          },
                         {'email': 'email@example.com',
                          'first_name': 'first_name',
                          'id': self.id_worker,
                          'last_name': 'last_name',
                          'username': 'username',
+                         'holidays': '0.0',
                          'gender': '',
-                         'category': ''
+                         'category': '',
                          },
                     ]
                     }
@@ -82,8 +84,9 @@ class AdminTest(TestCase):
                     'email': 'email@example.com',
                     'username': 'username',
                     'id': self.id_worker,
+                    'holidays': '0.0',
                     'gender': '',
-                    'category': ''
+                    'category': '',
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -130,8 +133,9 @@ class AdminTest(TestCase):
                     'email': 'newmail@example.com',
                     'username': 'worker',
                     'id': self.id_worker,
+                    'holidays': '0.0',
                     'gender': '',
-                    'category': ''
+                    'category': '',
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -159,16 +163,18 @@ class AdminTest(TestCase):
                          'id': self.test_admin.pk,
                          'last_name': 'last_name',
                          'username': 'admin',
+                         'holidays': '0.0',
                          'gender': '',
-                         'category': ''
+                         'category': '',
                          },
                         {'email': 'email@example.com',
                          'first_name': 'first_name',
                          'id': self.id_worker,
                          'last_name': 'last_name',
                          'username': 'username',
+                         'holidays': '0.0',
                          'gender': '',
-                         'category': ''
+                         'category': '',
                          },
                     ]
                     }
@@ -186,8 +192,9 @@ class AdminTest(TestCase):
                     'email': 'email@example.com',
                     'username': 'username',
                     'id': self.id_worker,
+                    'holidays': '0.0',
                     'gender': '',
-                    'category': ''
+                    'category': '',
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -251,8 +258,9 @@ class AdminTest(TestCase):
                     'email': 'newmail@example.com',
                     'username': 'worker',
                     'id': self.id_worker,
+                    'holidays': '0.0',
                     'gender': '',
-                    'category': ''
+                    'category': '',
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
