@@ -169,6 +169,66 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             )
         )
 
+    def test__list_occurrences_with_interval_dates_filter(self):
+        start_time = (dt.now() + td(days=10)).replace(microsecond=0)
+        worker = create_worker()
+        team = create_team(created_by=self.test_admin)
+        create_member(worker=worker, team=team)
+        self.test_occurrence = create_occurrence(
+            absence_type=self.test_absencetype,
+            worker=worker,
+            start_time=start_time,
+            end_time=calculate_occurrence_dates(
+                start_time, 3, 0
+            )
+        )
+        second_start_time = calculate_occurrence_dates(start_time, 5, 0)
+        self.second_test_occurrence = create_occurrence(
+            absence_type=self.test_absencetype,
+            worker=worker,
+            start_time=second_start_time,
+            end_time=calculate_occurrence_dates(
+                second_start_time, 3, 0
+            )
+        )
+        self.client.login(username='admin', password='password')
+        response = self.client.get(
+            self.base_url,
+                {
+                    'start_period': calculate_occurrence_dates(
+                        start_time, 3, 0
+                    ),
+                    'end_period': calculate_occurrence_dates(
+                        second_start_time, 1, 0
+                    )
+                }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        self.assertEqual(response.json()['next'], None)
+        self.assertEqual(response.json()['previous'], None)
+        self.assertEqual(
+            response.json()['results'][0]['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(start_time)
+        )
+        self.assertEqual(
+            response.json()['results'][0]['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                calculate_occurrence_dates(start_time, 3, 0)
+            )
+        )
+        self.assertEqual(
+            response.json()['results'][1]['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(second_start_time)
+        )
+        self.assertEqual(
+            response.json()['results'][1]['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                calculate_occurrence_dates(second_start_time, 3, 0)
+            )
+        )
+
 
 class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 

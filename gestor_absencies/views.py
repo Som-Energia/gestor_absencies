@@ -133,6 +133,8 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         queryset = SomEnergiaOccurrence.objects.all()
         worker = self.request.query_params.get('worker')
         team = self.request.query_params.get('team')
+        start_period = self.request.query_params.get('start_period')
+        end_period = self.request.query_params.get('end_period')
 
         if worker:
             absences = SomEnergiaAbsence.objects.all().filter(worker=worker)
@@ -142,6 +144,14 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             workers = [member.worker for member in members]
             absences = SomEnergiaAbsence.objects.all().filter(worker__in=workers)
             queryset = queryset.filter(absence__in=absences)
+        if start_period:
+            queryset = queryset.filter(
+                end_time__gte=start_period
+            )
+        if end_period:
+            queryset = queryset.filter(
+                start_time__lte=end_period
+            )
 
         return queryset
 
