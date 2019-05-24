@@ -1,11 +1,12 @@
 import datetime
 from decimal import Decimal
 
-import dateutil
+import dateutil.rrule as rrule
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 class Worker(AbstractUser):
@@ -67,6 +68,12 @@ class Worker(AbstractUser):
         permission = Permission.objects.get(codename='view_somenergiaabsencetype')
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='view_vacationpolicy')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='view_somenergiaoccurrence')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='add_somenergiaoccurrence')
+        self.user_permissions.add(permission)# TODO: refactor
+        permission = Permission.objects.get(codename='delete_somenergiaoccurrence')
         self.user_permissions.add(permission)# TODO: refactor
 
         # TODO: I per cada save() es tornen a crear les relacions?
@@ -250,8 +257,7 @@ class SomEnergiaAbsenceType(Base):
 
         super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
 
-        worker_list = Worker.objects.all()
-        for worker in worker_list:
+        for worker in Worker.objects.all():
             absence = SomEnergiaAbsence(
                 absence_type=self,
                 worker=worker,
@@ -268,6 +274,7 @@ class SomEnergiaAbsence(Base):
 
     absence_type = models.ForeignKey(
         SomEnergiaAbsenceType,
+        related_name='absence',
         on_delete=models.CASCADE,
         verbose_name=_("Absence Type"),
         help_text=_("")
@@ -276,6 +283,7 @@ class SomEnergiaAbsence(Base):
     worker = models.ForeignKey(
         Worker,
         null=True,
+        related_name='absence',
         on_delete=models.CASCADE,
         verbose_name=_("Worker"),
         help_text=_("")
@@ -300,6 +308,7 @@ class SomEnergiaOccurrence(Base):
     absence = models.ForeignKey(
         SomEnergiaAbsence,
         # editable=False,
+        related_name='occurrence',
         on_delete=models.CASCADE,
         verbose_name=_("Absence"),
         help_text=_("")
@@ -308,14 +317,21 @@ class SomEnergiaOccurrence(Base):
     def day_counter(self):
 
         if self.absence.absence_type.spend_days > 0:
-            byweekday = [5, 6]
+            coincident_days = 0
+            byweekday = [rrule.SA, rrule.SU]
         else:
-            byweekday = [0, 1, 2, 3, 4]
+            byweekday = [
+                rrule.MO,
+                rrule.TU,
+                rrule.WE,
+                rrule.TH,
+                rrule.FR
+            ]
 
-        days = len(list(dateutil.rrule.rrule(
+        days = len(list(rrule.rrule(
             dtstart=self.start_time,
             until=self.end_time,
-            freq=dateutil.rrule.DAILY,
+            freq=rrule.DAILY,
             byweekday=byweekday
         )))
 

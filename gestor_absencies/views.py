@@ -26,6 +26,8 @@ from rest_framework import status
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
+from rest_framework.exceptions import PermissionDenied
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,24 +46,33 @@ class WorkerViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    # def get_object(self):
-    #     obj = get_object_or_404(self.get_queryset(), pk=self.kwargs["pk"])
-    #     logger.debug(self.kwargs["pk"])
-    #     self.check_object_permissions(self.request, obj)
-    #     logger.debug(self.check_object_permissions(self.request, obj))
-    #     logger.debug(self.request.data)
-    #     logger.debug(self.request.user)
-    #     for p in self.get_permissions():
-    #         logger.debug(p)
-    #         logger.debug(p.perms_map)
-    #         logger.debug(p.get_required_permissions('GET', obj))
-    #     logger.debug(len(self.get_permissions()))
-    #     return obj
+    def perform_create(self, serializer):
+        if self.request.user.is_superuser:
+            serializer.save()
+            # TODO: Add create_by, modified_time...
+
+    def perform_update(self, serializer):
+        if self.request.user == self.get_object() or self.request.user.is_superuser:
+            serializer.save()
+            # TODO: modified_time...
+        else:
+            raise PermissionDenied()
 
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(
+            created_by=self.request.user,
+            modified_by=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            modified_by=self.request.user
+        )
 
 
 class MemberViewSet(viewsets.ModelViewSet):
@@ -85,6 +96,18 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
     queryset = VacationPolicy.objects.all()
     serializer_class = VacationPolicySerializer
 
+    def perform_create(self, serializer):
+
+        serializer.save(
+            created_by=self.request.user,
+            modified_by=self.request.user,
+        )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            modified_by=self.request.user
+        )
+
 
 class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
     queryset = SomEnergiaAbsenceType.objects.all()
@@ -106,10 +129,36 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
     queryset = SomEnergiaOccurrence.objects.all()
     serializer_class = SomEnergiaOccurrenceSerializer
 
+    def get_queryset(self):
+        queryset = SomEnergiaOccurrence.objects.all()
+        worker = self.request.query_params.get('worker')
+        team = self.request.query_params.get('team')
+        start_period = self.request.query_params.get('start_period')
+        end_period = self.request.query_params.get('end_period')
+
+        if worker:
+            absences = SomEnergiaAbsence.objects.all().filter(worker=worker)
+            queryset = queryset.filter(absence__in=absences)
+        elif team:
+            members = Member.objects.all().filter(team=team)
+            workers = [member.worker for member in members]
+            absences = SomEnergiaAbsence.objects.all().filter(worker__in=workers)
+            queryset = queryset.filter(absence__in=absences)
+        if start_period:
+            queryset = queryset.filter(
+                end_time__gte=start_period
+            )
+        if end_period:
+            queryset = queryset.filter(
+                start_time__lte=end_period
+            )
+
+        return queryset
+
     def create(self, request, *args, **kwargs):
         serializer = CreateSomEnergiaOccurrenceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        self.perform_create(serializer, request)
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data,
@@ -117,13 +166,16 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    def perform_create(self, serializer):
-        if self.request.user.is_superuser:
+    def perform_create(self, serializer, request):
+        if self.request.user.is_superuser or self.request.user.pk == self.request.data['worker']:
             serializer.save(
                 created_by=self.request.user,
-                modified_by=self.request.user
+                modified_by=self.request.user,
+                request=request
             )
             # TODO: Add create_by, modified_time...
+        else:
+            raise PermissionDenied()
 
     def perform_update(self, serializer):
         if self.request.user == self.get_object().absence.worker or self.request.user.is_superuser:
@@ -131,7 +183,10 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             # TODO: modified_time...
 
     def perform_destroy(self, instance):
-        try:
-            instance.delete()
-        except ValidationError:
-            raise serializers.ValidationError('Can not delete')
+        if self.request.user == instance.absence.worker or self.request.user.is_superuser:
+            try:
+                instance.delete()
+            except ValidationError:
+                raise serializers.ValidationError('Can not delete')
+        else:
+            raise PermissionDenied()

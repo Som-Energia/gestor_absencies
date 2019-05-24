@@ -9,5 +9,5 @@ urlpatterns = [
     path('absencies/', include('gestor_absencies.urls')),
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
-    path('api-token-auth/', obtain_jwt_token, name='token_auth'),
+    path('login/', obtain_jwt_token, name='login'),
 ]

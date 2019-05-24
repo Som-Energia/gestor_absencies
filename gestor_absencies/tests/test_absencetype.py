@@ -1,10 +1,15 @@
 from django.test import TestCase
-from gestor_absencies.models import SomEnergiaAbsenceType, Worker
 from django.urls import reverse
-from gestor_absencies.tests.test_helper import (
-    create_worker,
-    create_absencetype
+from gestor_absencies.models import (
+    SomEnergiaAbsence,
+    SomEnergiaAbsenceType,
+    Worker
 )
+from gestor_absencies.tests.test_helper import (
+    create_absencetype,
+    create_worker
+)
+
 
 class AdminTest(TestCase):
 
@@ -225,12 +230,47 @@ class AdminTest(TestCase):
     def test__absencetype_put_set_modified_params(self):
         pass
 
+    def test__post__create_her_somenergiaabcences(self):
+        #create_worker(username='ronald')
+        body = {
+            'name': 'baiR',
+            'description': 'baixa A',
+            'spend_days': 0,
+            'min_duration': 1,
+            'max_duration': 3,
+            'min_spend': 2,
+            'max_spend': 4
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            len(SomEnergiaAbsenceType.objects.filter(name='baiR')),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.filter(absence_type__name='baiR')),
+            2
+        )
+        self.assertIsNotNone(
+            SomEnergiaAbsenceType.objects.filter(
+                absence__worker__username='admin'
+            )
+        )
+        self.assertIsNotNone(
+            SomEnergiaAbsenceType.objects.filter(
+                absence__worker__username='username'
+            )
+        )
+
     def tearDown(self):
         self.test_absencetype.delete()
 
 
 # TODO: Tests
 
-# Create SomEnergiaAbsenceType create her SomEnergiaAbsences
 # With unexpected body params no raise error
 # Can't delete a used SomEnergiaAbsenceType (Relation with Occurrences)

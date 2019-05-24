@@ -112,7 +112,61 @@ class TeamTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
+    def test__team_post__worker(self):
+        body = {
+            'name': 'ET',
+        }
+        self.client.login(username='username', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__team_put__worker(self):
+        self.client.login(username='username', password='password')
+        body = {
+            'name': 'OV Team',
+        }
+        response = self.client.put(
+            join(self.base_url, str(self.id_team)),
+            data=body,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__team_delete__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.delete(
+            join(self.base_url, str(self.id_team))
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__team_post_set_create_modified_params(self):
+        pass
+
+    def test__team_put_set_modified_params(self):
+        pass
+
     def tearDown(self):
         self.test_worker.delete()
         self.test_team.delete()
         self.test_admin.delete()
+
+
+# TODO: Tests
+
+# With unexpected body params no raise error

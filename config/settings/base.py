@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     # 3th party libs
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
     # local apps
     'gestor_absencies.apps.GestorAbsenciesConfig',
 
@@ -30,6 +31,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -80,7 +83,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
-    'JWT_VERIFY_EXPIRATION': False
+    'JWT_VERIFY_EXPIRATION': False,
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'gestor_absencies.common.utils.jwt_response_token_user_id'
 }
 
 LANGUAGE_CODE = 'en-us'

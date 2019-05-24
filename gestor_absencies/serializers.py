@@ -1,9 +1,10 @@
 from datetime import timedelta as td, datetime as dt
-
-from django.core.exceptions import ValidationError
+import dateutil.rrule as rrule
+from django.db.models import Q
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from gestor_absencies.common.datetime_calculator import calculate_datetime
 from rest_framework import serializers
-
+from gestor_absencies.common.utils import computable_days_between_dates, find_concurrence_dates
 from .models import (
     Member,
     SomEnergiaAbsence,
@@ -20,7 +21,14 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Worker
         fields = [
-            'id', 'first_name', 'last_name', 'email', 'username'
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'username',
+            'category',
+            'gender',
+            'holidays'
         ]
 
 
@@ -157,6 +165,10 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         return data
 
     def create(self, validated_data):
+        request = validated_data.get('request')
+        user = None
+        if request and hasattr(request, "user"):
+            user = request.user
 
         start_datetime = calculate_datetime(
             dt=validated_data['start_time'],
@@ -171,35 +183,37 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             is_start=False
         )
 
-        absence = SomEnergiaAbsence.objects.all().filter(
-            worker=validated_data['worker'],
-            absence_type=validated_data['absence_type']
-        )[0]
+        try:
+            absence = SomEnergiaAbsence.objects.filter(
+                worker=validated_data['worker'],
+                absence_type=validated_data['absence_type']
+            )[0]
+        except ObjectDoesNotExist as e:
+            raise serializers.ValidationError('Absence not found')
 
         occurrence = SomEnergiaOccurrence(
             start_time=start_datetime,
             end_time=end_datetime,
             absence=absence,
-            created_by=validated_data['created_by'],
-            modified_by=validated_data['modified_by']
+            created_by=user,
+            modified_by=user
         )
-
         duration = occurrence.day_counter()
         if ((occurrence.absence.absence_type.max_duration != -1 and
              abs(duration) > occurrence.absence.absence_type.max_duration) or
                 abs(duration) < occurrence.absence.absence_type.min_duration):
-                    raise serializers.ValidationError('Incorrect occurrence')
-        elif occurrence.start_time.day < dt.now().day:
-                raise serializers.ValidationError('Incorrect occurrence')
+                    raise serializers.ValidationError('Incorrect duration')
+        elif occurrence.start_time < dt.now():
+                raise serializers.ValidationError('Can\'t create a passade occurrence')
         if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
-                raise serializers.ValidationError('Incorrect occurrence')
+                raise serializers.ValidationError('Not enough holidays')
 
 
         #Split occurrence
-        occurrences = SomEnergiaOccurrence.objects.all().filter(
-            start_time__lt=start_datetime,
-            end_time__day__gte=end_datetime.day,
-            #TODO: add property
+        occurrences = SomEnergiaOccurrence.objects.filter(
+            start_time__lte=start_datetime,
+            end_time__gte=end_datetime,
+            absence__worker__id=validated_data['worker']
         ).all()
         if occurrences:
             for o in occurrences:
@@ -209,25 +223,127 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 created_by_occurrence = o.created_by
                 modified_by_occurrence = o.modified_by
                 o.delete()
+                if start_occurrence < start_datetime:
+                    if validated_data['start_afternoon'] and not validated_data['start_morning']:
+                        first_occurrence = SomEnergiaOccurrence(
+                            start_time=start_occurrence,
+                            end_time=start_datetime.replace(hour=13),
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        first_occurrence.save()
+                    else:
+                        first_occurrence = SomEnergiaOccurrence(
+                            start_time=start_occurrence,
+                            end_time=(start_datetime - td(days=1)).replace(hour=17),
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        first_occurrence.save()
+                if end_occurrence > end_datetime:
+                    if validated_data['end_morning'] and not validated_data['end_afternoon']:
+                        second_occurrence = SomEnergiaOccurrence(
+                            start_time=end_datetime.replace(hour=13),
+                            end_time=end_occurrence,
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        second_occurrence.save()
+                    else:
+                        second_occurrence = SomEnergiaOccurrence(
+                            start_time=(end_datetime + td(days=1)).replace(hour=9),
+                            end_time=end_occurrence,
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        second_occurrence.save()
 
-                if start_occurrence.day < start_datetime.day:
-                    first_occurrence = SomEnergiaOccurrence(
-                        start_time=start_occurrence,
-                        end_time=(start_datetime - td(days=1)).replace(hour=15),
-                        absence=absence_occurrence,
-                        created_by=created_by_occurrence,
-                        modified_by=modified_by_occurrence
-                    )
-                    first_occurrence.save()
-                if end_occurrence.day > end_datetime.day:
-                    second_occurrence = SomEnergiaOccurrence(
-                        start_time=(end_datetime + td(days=1)).replace(hour=9),
-                        end_time=end_occurrence,
-                        absence=absence_occurrence,
-                        created_by=created_by_occurrence,
-                        modified_by=modified_by_occurrence
-                    )
-                    second_occurrence.save()
+        # Override occurrences
+        occurrences = SomEnergiaOccurrence.objects.filter(
+            (
+                (Q(start_time__gt=start_datetime)
+                &
+                Q(start_time__lt=end_datetime))
+            |
+                (Q(end_time__gt=start_datetime)
+                &
+                Q(end_time__lt=end_datetime))
+            |
+                (Q(start_time__gt=start_datetime)
+                &
+                Q(end_time__lt=end_datetime))
+            )
+            &
+            Q(absence__worker__id=validated_data['worker'])
+        ).all()
+        if occurrences:
+            for o in occurrences:
+                start_concurrence, end_concurrence = find_concurrence_dates(occurrence, o)
+                days = computable_days_between_dates(
+                    start_concurrence,
+                    end_concurrence,
+                    [
+                        rrule.MO,
+                        rrule.TU,
+                        rrule.WE,
+                        rrule.TH,
+                        rrule.FR
+                    ]
+                )
+                start_occurrence = o.start_time
+                end_occurrence = o.end_time
+                absence_occurrence = o.absence
+                created_by_occurrence = o.created_by
+                modified_by_occurrence = o.modified_by
+                o.delete()
+                worker = Worker.objects.filter(
+                    id=validated_data['worker']
+                ).first()
+                worker.holidays += days
+                if end_occurrence > end_datetime:
+                    if validated_data['end_morning'] and not validated_data['end_afternoon']:
+                        first_occurrence = SomEnergiaOccurrence(
+                            start_time=end_datetime.replace(hour=13),
+                            end_time=end_occurrence,
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        first_occurrence.save()
+                    else:
+                        first_occurrence = SomEnergiaOccurrence(
+                            start_time=(end_datetime + td(days=1)).replace(hour=9),
+                            end_time=end_occurrence,
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        first_occurrence.save()
+                if start_occurrence < start_datetime:
+                    if validated_data['start_afternoon'] and not validated_data['start_morning']:
+                        second_occurrence = SomEnergiaOccurrence(
+                            start_time=start_occurrence,
+                            end_time=end_concurrence.replace(hour=13),
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        second_occurrence.save()
+                    else:
+                        second_occurrence = SomEnergiaOccurrence(
+                            start_time=start_occurrence,
+                            end_time=(end_concurrence - td(days=1)).replace(hour=17),
+                            absence=absence_occurrence,
+                            created_by=created_by_occurrence,
+                            modified_by=modified_by_occurrence
+                        )
+                        second_occurrence.save()
+
+
 
         try:
             occurrence.save()

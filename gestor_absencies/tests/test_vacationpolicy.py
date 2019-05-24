@@ -98,5 +98,99 @@ class AdminTest(TestCase):
         )
         self.assertEqual(response.status_code, 204)
 
+    def test__vacationpolicy_list__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.get(
+            self.base_url
+        )
+
+        expected = {'count': 1,
+                    'next': None,
+                    'previous': None,
+                    'results':
+                    [{'name': 'normal',
+                     'description': 'normal vacation policy',
+                     'holidays': 25,
+                     'id': self.id_vacationpolicy
+                      }]
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+    def test__vacationpolicy_get__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.get(
+            '/'.join([self.base_url, str(self.id_vacationpolicy)])
+        )
+
+        expected = {'name': 'normal',
+                    'description': 'normal vacation policy',
+                    'holidays': 25,
+                    'id': self.id_vacationpolicy
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+    def test__vacationpolicy_post__worker(self):
+        body = {
+            'name': 'special',
+            'description': 'special vacation policy',
+            'holidays': 30
+        }
+        self.client.login(username='username', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__vacationpolicy_put__worker(self):
+        self.client.login(username='username', password='password')
+        body = {
+            'name': 'normal',
+            'holidays': 30
+        }
+        response = self.client.put(
+            '/'.join([self.base_url, str(self.id_vacationpolicy)]),
+            data=body,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__vacationpolicy_delete__worker(self):
+        self.client.login(username='username', password='password')
+        response = self.client.delete(
+            '/'.join([self.base_url, str(self.id_vacationpolicy)])
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.json(),
+            {'detail': 'You do not have permission to perform this action.'}
+        )
+
+    def test__cant_repeat_same_name(self):
+        pass
+
+    def test__vacationpolicy_post_set_create_modified_params(self):
+        pass
+
+    def test__vacationpolicy_put_set_modified_params(self):
+        pass
+
     def tearDown(self):
         self.test_vacationpolicy.delete()
+
+
+# TODO: Tests
+
+# With unexpected body params no raise error
+# Can't delete a used VP (Relation with Worker)
