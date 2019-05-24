@@ -1,23 +1,24 @@
 from os.path import join
-from django.urls import reverse
+
 from django.test import TestCase
+from django.urls import reverse
 from gestor_absencies.tests.test_helper import (
     create_member,
     create_team,
-    create_worker,
+    create_worker
 )
 
 
 class MemberTest(TestCase):
 
     def setUp(self):
-        self.test_team = create_team()
-
-        self.id_team = self.test_team.pk
         self.base_url = reverse('members')
 
         self.test_worker = create_worker()
         self.id_worker = self.test_worker.pk
+
+        self.test_team = create_team(created_by=self.test_worker)
+        self.id_team = self.test_team.pk
 
         self.member_relation = create_member(
             worker=self.test_worker,
@@ -48,7 +49,10 @@ class MemberTest(TestCase):
         self.assertEqual(response.json(), expected)
 
     def test__list_filter_members(self):
-        self.test_otherteam = create_team(name='ET')
+        self.test_otherteam = create_team(
+            name='ET',
+            created_by=self.test_worker
+        )
         self.id_otherteam = self.test_otherteam.pk
         self.member_otherrelation = create_member(
             worker=self.test_worker,

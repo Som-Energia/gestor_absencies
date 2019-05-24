@@ -1,20 +1,22 @@
 from os.path import join
-from django.urls import reverse
+
 from django.test import TestCase
+from django.urls import reverse
 from gestor_absencies.tests.test_helper import (
-    create_worker,
     create_team,
+    create_worker
 )
 
 
 class TeamTest(TestCase):
     def setUp(self):
-        self.test_team = create_team()
-        self.id_team = self.test_team.pk
         self.base_url = reverse('teams')
 
         self.test_admin = create_worker(username='admin', is_admin=True)
         self.test_worker = create_worker()
+
+        self.test_team = create_team(created_by=self.test_admin)
+        self.id_team = self.test_team.pk
 
     def test__team_list__admin(self):
         self.client.login(username='admin', password='password')

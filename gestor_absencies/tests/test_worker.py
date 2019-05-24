@@ -1,7 +1,10 @@
+from django.test import TestCase
 from os.path import join
 from django.urls import reverse
-from django.test import TestCase
-from gestor_absencies.tests.test_helper import create_worker
+from gestor_absencies.tests.test_helper import (
+    create_worker,
+    create_vacationpolicy
+)
 
 
 class AdminTest(TestCase):
@@ -10,6 +13,11 @@ class AdminTest(TestCase):
         self.test_admin = create_worker(username='admin', is_admin=True)
         self.id_worker = self.test_worker.pk
         self.base_url = reverse('workers')
+
+        self.test_vacation_policy = create_vacationpolicy(
+            description='tomorrow',
+            created_by=self.test_admin
+        )
 
     def login_worker(self, username, password):
         body = {
@@ -76,7 +84,8 @@ class AdminTest(TestCase):
             'password': 'yalo',
             'first_name': 'Pelayo',
             'last_name': 'Manzano',
-            'email': 'newmail@example.com'
+            'email': 'newmail@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
         }
         self.client.login(username='admin', password='password')
         response = self.client.post(

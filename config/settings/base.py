@@ -17,7 +17,6 @@ INSTALLED_APPS = [
     # 3th party libs
     'rest_framework',
     'rest_framework.authtoken',
-    'swingtime',
     # local apps
     'gestor_absencies.apps.GestorAbsenciesConfig',
 
@@ -86,13 +85,13 @@ REST_FRAMEWORK = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'CET'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 STATIC_URL = '/static/'
 

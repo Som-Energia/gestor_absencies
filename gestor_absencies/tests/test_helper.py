@@ -1,5 +1,15 @@
-from gestor_absencies.models import Worker, Team, Member
+from datetime import timedelta
 
+from dateutil import rrule
+from gestor_absencies.models import (
+    Member,
+    SomEnergiaAbsence,
+    SomEnergiaAbsenceType,
+    SomEnergiaOccurrence,
+    Team,
+    VacationPolicy,
+    Worker
+)
 
 worker_attributes = {
     'first_name': 'first_name',
@@ -24,9 +34,11 @@ def create_worker(username='username', is_admin=False):
     return worker
 
 
-def create_team(name='IT'):
+def create_team(created_by, name='IT'):
     team = Team(
-        name=name
+        name=name,
+        created_by=created_by,
+        modified_by=created_by
     )
     team.save()
     return team
@@ -39,3 +51,73 @@ def create_member(worker, team):
     )
     member.save()
     return member
+
+
+def create_vacationpolicy(description, created_by, name='normal', holidays=25):
+    vacationpolicy = VacationPolicy(
+        name=name,
+        description=description,
+        holidays=holidays,
+        created_by=created_by,
+        modified_by=created_by
+    )
+    vacationpolicy.save()
+    return vacationpolicy
+
+
+def create_absencetype(name, description, spend_days, min_duration, max_duration, created_by):
+    absencetype = SomEnergiaAbsenceType(
+        name=name,
+        description=description,
+        spend_days=spend_days,
+        min_duration=min_duration,
+        max_duration=max_duration,
+        min_spend=min_duration,
+        max_spend=max_duration,
+        created_by=created_by,
+        modified_by=created_by
+    )
+    absencetype.save()
+    return absencetype
+
+
+def create_occurrence(absence_type, worker, start_time, end_time, created_by=None):
+    absence = SomEnergiaAbsence.objects.all().filter(
+        worker=worker,
+        absence_type=absence_type
+    )[0]
+    if not created_by:
+        created_by = worker
+    occurrence = SomEnergiaOccurrence(
+        absence=absence,
+        start_time=start_time,
+        end_time=end_time,
+        created_by=created_by,
+        modified_by=created_by
+    )
+    occurrence.save()
+    return occurrence
+
+
+def days_between_dates(start_time, end_time, dates_types):
+    return len(list(rrule.rrule(
+        dtstart=start_time,
+        until=end_time,
+        freq=rrule.DAILY,
+        byweekday=dates_types
+    )))
+
+
+def calculate_occurrence_dates(start_time, duration, spend_days):
+    workday = [0, 1, 2, 3, 4]
+    weekend = [5, 6]
+    end_time = start_time
+
+    if spend_days < 0 or spend_days == 0:
+        while days_between_dates(start_time, end_time, workday) < duration:
+            end_time = end_time + timedelta(days=1)
+    elif spend_days > 0:
+        while days_between_dates(start_time, end_time, weekend) < duration:
+            end_time = end_time + timedelta(days=1)
+
+    return end_time
