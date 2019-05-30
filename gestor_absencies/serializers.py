@@ -17,6 +17,7 @@ from .models import (
 
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Worker
@@ -28,8 +29,15 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
             'username',
             'category',
             'gender',
-            'holidays'
+            'holidays',
+            'password'
         ]
+
+    def update(self, instance, validated_data):
+        super(WorkerSerializer, self).update(instance, validated_data)
+        instance.set_password(validated_data.get('password', instance.password))
+        instance.save()
+        return instance
 
 
 class CreateWorkerSerializer(serializers.HyperlinkedModelSerializer):

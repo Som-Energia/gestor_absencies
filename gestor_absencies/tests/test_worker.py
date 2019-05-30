@@ -265,6 +265,34 @@ class AdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
+    def test__worker_can_change_password__worker(self):
+        self.client.login(username='username', password='password')
+        body = {
+            'username': 'username',
+            'password': 'newpassword'
+        }
+        response = self.client.put(
+            join(self.base_url, str(self.id_worker)),
+            data=body,
+            content_type='application/json'
+        )
+        login_response = self.login_worker('username', 'newpassword')
+
+        expected = {
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email@example.com',
+            'username': 'username',
+            'id': self.id_worker,
+            'holidays': '0.0',
+            'gender': '',
+            'category': '',
+        }
+        self.test_worker.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+        self.assertEqual(login_response.status_code, 200)
+
     def test__worker_cant_delete__worker(self):
         self.client.login(username='username', password='password')
         response = self.client.delete(
