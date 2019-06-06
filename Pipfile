@@ -14,6 +14,7 @@ django-cors-headers = "*"
 Django = "<3.0,>=2.0"
 PyYAML = "*"
 ipython = "*"
+uwsgi = "*"
 
 [requires]
 python_version = "3.6"

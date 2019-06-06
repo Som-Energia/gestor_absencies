@@ -22,3 +22,5 @@ DATABASES = {
         'PORT': config['databases']['develop']['port'],
     }
 }
+
+CORS_ORIGIN_WHITELIST = config['whitelist']['develop']

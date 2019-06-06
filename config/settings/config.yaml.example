@@ -5,3 +5,17 @@ databases:
     port: 5432
     user: user
     password: password
+
+whitelist:
+  develop: ["element"]
+
+databases:
+  prod:
+    name: name
+    host: host
+    port: 5432
+    user: user
+    password: password
+
+whitelist:
+  prod: ["element"]
