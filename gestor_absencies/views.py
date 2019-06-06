@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class WorkerViewSet(viewsets.ModelViewSet):
-    queryset = Worker.objects.all()
+    queryset = Worker.objects.all().order_by('id')
     serializer_class = WorkerSerializer
 
     def create(self, request, *args, **kwargs):
@@ -60,7 +60,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
 
 
 class TeamViewSet(viewsets.ModelViewSet):
-    queryset = Team.objects.all()
+    queryset = Team.objects.all().order_by('id')
     serializer_class = TeamSerializer
 
     def perform_create(self, serializer):
@@ -76,7 +76,7 @@ class TeamViewSet(viewsets.ModelViewSet):
 
 
 class MemberViewSet(viewsets.ModelViewSet):
-    queryset = Member.objects.all()
+    queryset = Member.objects.all().order_by('id')
     serializer_class = MemberSerializer
 
     def get_queryset(self):
@@ -93,7 +93,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
 
 class VacationPolicyViewSet(viewsets.ModelViewSet):
-    queryset = VacationPolicy.objects.all()
+    queryset = VacationPolicy.objects.all().order_by('id')
     serializer_class = VacationPolicySerializer
 
     def perform_create(self, serializer):
@@ -110,7 +110,7 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
 
 
 class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
-    queryset = SomEnergiaAbsenceType.objects.all()
+    queryset = SomEnergiaAbsenceType.objects.all().order_by('id')
     serializer_class = SomEnergiaAbsenceTypeSerializer
 
     def perform_create(self, serializer):
@@ -126,7 +126,6 @@ class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
 
 
 class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
-    queryset = SomEnergiaOccurrence.objects.all()
     serializer_class = SomEnergiaOccurrenceSerializer
 
     def get_queryset(self):
@@ -153,7 +152,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
                 start_time__lte=end_period
             )
 
-        return queryset
+        return queryset.order_by('start_time')
 
     def create(self, request, *args, **kwargs):
         serializer = CreateSomEnergiaOccurrenceSerializer(data=request.data)
@@ -167,7 +166,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer, request):
-        if self.request.user.is_superuser or self.request.user.pk == self.request.data['worker']:
+        if self.request.user.is_superuser or (self.request.user.pk == self.request.data['worker']):
             serializer.save(
                 created_by=self.request.user,
                 modified_by=self.request.user,

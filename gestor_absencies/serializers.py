@@ -1,4 +1,7 @@
-from datetime import timedelta as td, datetime as dt
+# from datetime import timedelta as td, datetime as dt
+# import datetime.datetime as dt
+import datetime
+from datetime import timedelta as td
 import dateutil.rrule as rrule
 from django.db.models import Q
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -35,7 +38,8 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
 
     def update(self, instance, validated_data):
         super(WorkerSerializer, self).update(instance, validated_data)
-        instance.set_password(validated_data.get('password', instance.password))
+        if validated_data.get('password'):
+            instance.set_password(validated_data.get('password'))
         instance.save()
         return instance
 
@@ -163,12 +167,12 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
         if (not data['start_morning'] and not data['start_afternoon']) or (
                 not data['end_morning'] and not data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect occurrence')
+                    raise serializers.ValidationError('Incorrect format occurrence')
 
         if (data['end_time'].day - data['start_time'].day >= 1) and (
             data['start_morning'] and not data['start_afternoon'] or
                 not data['end_morning'] and data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect occurrence')
+                    raise serializers.ValidationError('Incorrect format occurrence')
 
         return data
 
@@ -211,7 +215,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
              abs(duration) > occurrence.absence.absence_type.max_duration) or
                 abs(duration) < occurrence.absence.absence_type.min_duration):
                     raise serializers.ValidationError('Incorrect duration')
-        elif occurrence.start_time < dt.now():
+        elif occurrence.start_time < datetime.datetime.now().replace(hour=0, minute=0):
                 raise serializers.ValidationError('Can\'t create a passade occurrence')
         if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
                 raise serializers.ValidationError('Not enough holidays')

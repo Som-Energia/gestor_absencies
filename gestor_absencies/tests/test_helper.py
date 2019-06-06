@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from dateutil import rrule
 from gestor_absencies.models import (
@@ -121,3 +121,10 @@ def calculate_occurrence_dates(start_time, duration, spend_days):
             end_time = end_time + timedelta(days=1)
 
     return end_time
+
+
+def next_monday():
+    date = datetime.now()
+    while date.isoweekday() != 1:
+        date = date + timedelta(days=1)
+    return date

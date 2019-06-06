@@ -317,7 +317,6 @@ class SomEnergiaOccurrence(Base):
     def day_counter(self):
 
         if self.absence.absence_type.spend_days > 0:
-            coincident_days = 0
             byweekday = [rrule.SA, rrule.SU]
         else:
             byweekday = [
@@ -349,7 +348,6 @@ class SomEnergiaOccurrence(Base):
 
         self.full_clean()
         super(SomEnergiaOccurrence, self).save(*args, **kwargs)
-
         duration = self.day_counter()
         if self.absence.absence_type.spend_days != 0:
             self.absence.worker.holidays += Decimal(duration)
@@ -357,7 +355,7 @@ class SomEnergiaOccurrence(Base):
 
     def delete(self, *args, **kwargs):
 
-        if self.start_time.replace(tzinfo=None) < datetime.datetime.now():
+        if self.start_time.replace(tzinfo=None).day < datetime.datetime.now().day:
             raise ValidationError(_('Can not remove a started occurrence'))
 
         if self.absence.absence_type.spend_days != 0:
