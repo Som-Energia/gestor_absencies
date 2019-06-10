@@ -253,6 +253,12 @@ class SomEnergiaAbsenceType(Base):
         help_text=_("")
     )
 
+    color = models.CharField(
+        max_length=7,
+        verbose_name=_('Representation color'),
+        help_text=_("")
+    )
+
     def save(self, *args, **kwargs):
 
         super(SomEnergiaAbsenceType, self).save(*args, **kwargs)

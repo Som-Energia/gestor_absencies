@@ -109,6 +109,7 @@ class VacationPolicySerializer(serializers.HyperlinkedModelSerializer):
 class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
 
     description = serializers.CharField(required=False)
+    color = serializers.CharField(required=False)
 
     class Meta:
         model = SomEnergiaAbsenceType
@@ -120,7 +121,8 @@ class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
             'max_duration',
             'min_duration',
             'max_spend',
-            'min_spend'
+            'min_spend',
+            'color',
         ]
 
 

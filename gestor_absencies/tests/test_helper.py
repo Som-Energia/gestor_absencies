@@ -65,7 +65,7 @@ def create_vacationpolicy(description, created_by, name='normal', holidays=25):
     return vacationpolicy
 
 
-def create_absencetype(name, description, spend_days, min_duration, max_duration, created_by):
+def create_absencetype(name, description, spend_days, min_duration, max_duration, created_by, color):
     absencetype = SomEnergiaAbsenceType(
         name=name,
         description=description,
@@ -75,7 +75,8 @@ def create_absencetype(name, description, spend_days, min_duration, max_duration
         min_spend=min_duration,
         max_spend=max_duration,
         created_by=created_by,
-        modified_by=created_by
+        modified_by=created_by,
+        color=color,
     )
     absencetype.save()
     return absencetype

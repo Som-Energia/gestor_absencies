@@ -331,7 +331,8 @@ class AdminTest(TestCase):
             spend_days=0,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#000000',
         )
         body = {
             'username': 'Peli',

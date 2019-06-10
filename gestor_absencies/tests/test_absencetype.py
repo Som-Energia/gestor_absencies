@@ -25,7 +25,8 @@ class AdminTest(TestCase):
             spend_days=1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         self.id_absencetype = self.test_absencetype.pk
         self.base_url = reverse('absencetype')
@@ -49,6 +50,7 @@ class AdminTest(TestCase):
                       'max_duration': '-1.0',
                       'min_spend': '0.5',
                       'max_spend': '-1.0',
+                      'color': '#156420',
                       'id': self.id_absencetype
                       }]
                     }
@@ -68,7 +70,8 @@ class AdminTest(TestCase):
                     'max_duration': '-1.0',
                     'min_spend': '0.5',
                     'max_spend': '-1.0',
-                    'id': self.id_absencetype
+                    'id': self.id_absencetype,
+                    'color': '#156420',
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -81,7 +84,8 @@ class AdminTest(TestCase):
             'min_duration': 1,
             'max_duration': 3,
             'min_spend': 2,
-            'max_spend': 4
+            'max_spend': 4,
+            'color': '#000000'
         }
         self.client.login(username='admin', password='password')
         response = self.client.post(
@@ -96,6 +100,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json()['max_duration'], '3.0')
         self.assertEqual(response.json()['min_spend'], '2.0')
         self.assertEqual(response.json()['max_spend'], '4.0')
+        self.assertEqual(response.json()['color'], '#000000')
 
     def test__absencetype_put__admin(self):
         self.client.login(username='admin', password='password')
@@ -118,8 +123,10 @@ class AdminTest(TestCase):
                     'max_duration': '10.0',
                     'min_spend': '0.5',
                     'max_spend': '-1.0',
+                    'color': '#156420',
                     'id': self.id_absencetype
                     }
+        print(response.json())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
@@ -147,6 +154,7 @@ class AdminTest(TestCase):
                       'max_duration': '-1.0',
                       'min_spend': '0.5',
                       'max_spend': '-1.0',
+                      'color': '#156420',
                       'id': self.id_absencetype
                       }]
                     }
@@ -166,6 +174,7 @@ class AdminTest(TestCase):
                     'max_duration': '-1.0',
                     'min_spend': '0.5',
                     'max_spend': '-1.0',
+                    'color': '#156420',
                     'id': self.id_absencetype
                     }
         self.assertEqual(response.status_code, 200)
@@ -179,7 +188,8 @@ class AdminTest(TestCase):
             'min_duration': 1,
             'max_duration': 3,
             'min_spend': 2,
-            'max_spend': 4
+            'max_spend': 4,
+            'color': '#000000',
         }
         self.client.login(username='username', password='password')
         response = self.client.post(
@@ -239,7 +249,8 @@ class AdminTest(TestCase):
             'min_duration': 1,
             'max_duration': 3,
             'min_spend': 2,
-            'max_spend': 4
+            'max_spend': 4,
+            'color': '#000000',
         }
         self.client.login(username='admin', password='password')
         response = self.client.post(

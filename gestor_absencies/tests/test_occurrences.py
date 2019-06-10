@@ -48,7 +48,8 @@ class SomEnergiaOccurrenceSetupMixin(object):
             spend_days=0,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         self.id_absencetype = self.test_absencetype.pk
 
@@ -355,7 +356,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=1,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -401,7 +403,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
@@ -447,7 +450,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=30,
             max_duration=30,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=30)).replace(microsecond=0)
         body = {
@@ -478,7 +482,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=1,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -526,7 +531,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=3)).replace(microsecond=0)
         body = {
@@ -559,7 +565,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
@@ -607,7 +614,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = self.testoccurrence_start_time
         body = {
@@ -655,7 +663,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
@@ -703,7 +712,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -733,7 +743,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=1)).replace(microsecond=0)
         body = {
@@ -766,7 +777,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -830,7 +842,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -895,7 +908,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -959,7 +973,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -1023,7 +1038,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -1102,7 +1118,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=0,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -1205,7 +1222,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -1269,7 +1287,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -1344,7 +1363,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=0.5,
             max_duration=-1,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         body = {
             'absence_type': absence_type.pk,
@@ -1427,7 +1447,8 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=-1,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=3)).replace(hour=10, microsecond=0)
         self.new_occurrence = create_occurrence(
@@ -1455,7 +1476,8 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
             spend_days=1,
             min_duration=3,
             max_duration=3,
-            created_by=self.test_admin
+            created_by=self.test_admin,
+            color='#156420',
         )
         start_time = (datetime.datetime.now() + td(days=3)).replace(hour=10, microsecond=0)
         self.new_occurrence = create_occurrence(
