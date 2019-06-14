@@ -361,9 +361,6 @@ class SomEnergiaOccurrence(Base):
 
     def delete(self, *args, **kwargs):
 
-        if self.start_time.replace(tzinfo=None).day < datetime.datetime.now().day:
-            raise ValidationError(_('Can not remove a started occurrence'))
-
         if self.absence.absence_type.spend_days != 0:
             self.absence.worker.holidays -= Decimal(self.day_counter())
             self.absence.worker.save()

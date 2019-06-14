@@ -25,7 +25,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
-
+import datetime
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
@@ -183,9 +184,11 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         if self.request.user == instance.absence.worker or self.request.user.is_superuser:
+            if instance.start_time < datetime.datetime.now():
+                raise serializers.ValidationError(_('Can not remove a started occurrence'))
             try:
                 instance.delete()
-            except ValidationError:
-                raise serializers.ValidationError('Can not delete')
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
         else:
             raise PermissionDenied()

@@ -1498,20 +1498,6 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(self.test_admin.holidays, 22)
 
-    def test__cant_delete_started_occurrence(self):
-        start_time = (datetime.datetime.now() + td(days=1)).replace(hour=10, microsecond=0)
-        self.new_occurrence = create_occurrence(
-            absence_type=self.test_absencetype,
-            worker=self.test_admin,
-            start_time=start_time,
-            end_time=calculate_occurrence_dates(start_time, 3, 0)
-        )
-        self.new_occurrence.start_time = (datetime.datetime.now() + td(days=-1)).replace(microsecond=0)
-
-        with self.assertRaises(ValidationError) as ctx:
-            self.new_occurrence.delete()
-        self.assertEqual(ctx.exception.message, 'Can not remove a started occurrence')
-
     def test__worker_can_delete_her_occurrences(self):
         worker = create_worker()
         start_time = (datetime.datetime.now() + td(days=1)).replace(hour=10, microsecond=0, minute=0)
@@ -1543,6 +1529,38 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
             {'detail': 'You do not have permission to perform this action.'}
         )
 
+    def test__cant_delete_passade_occurrence(self):
+        old_datetime = datetime.datetime
+        datetime.datetime = self.make_datetime(
+            (self.testoccurrence_start_time + td(days=1)).year,
+            (self.testoccurrence_start_time + td(weeks=4)).month,
+            (self.testoccurrence_start_time - td(days=1)).day,
+            11
+        )
+        self.client.login(username='admin', password='password')
+        response = self.client.delete(
+            '/'.join([self.base_url, str(self.id_occurrence)])
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), ['Can not remove a started occurrence'])
+        datetime.datetime = old_datetime
+
+    def test__can_delete_next_month_occurrence(self):
+        old_datetime = datetime.datetime
+        datetime.datetime = self.make_datetime(
+            (self.testoccurrence_start_time + td(days=1)).year,
+            (self.testoccurrence_start_time - td(weeks=4)).month,
+            30,
+            11
+        )
+        self.client.login(username='admin', password='password')
+        response = self.client.delete(
+            '/'.join([self.base_url, str(self.id_occurrence)])
+        )
+
+        self.assertEqual(response.status_code, 204)
+        datetime.datetime = old_datetime
 
 # TODO:
 
