@@ -165,20 +165,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             'end_afternoon'
         ]
 
-    def validate(self, data):
-
-        if (not data['start_morning'] and not data['start_afternoon']) or (
-                not data['end_morning'] and not data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect format occurrence')
-
-        if (data['end_time'].day - data['start_time'].day >= 1) and (
-            data['start_morning'] and not data['start_afternoon'] or
-                not data['end_morning'] and data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect format occurrence')
-
-        return data
-
-    def create(self, validated_data):
+    def extract_body_params(self, validated_data):
         request = validated_data.get('request')
         user = None
         if request and hasattr(request, "user"):
@@ -196,13 +183,31 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             afternoon=validated_data['end_afternoon'],
             is_start=False
         )
+        absence = SomEnergiaAbsence.objects.filter(
+            worker=validated_data['worker'],
+            absence_type=validated_data['absence_type']
+        )[0]
+
+        return user, start_datetime, end_datetime, absence
+
+    def validate(self, data):
+
+        if (not data['start_morning'] and not data['start_afternoon']) or (
+                not data['end_morning'] and not data['end_afternoon']):
+                    raise serializers.ValidationError('Incorrect format occurrence')
+
+        if (data['end_time'].day - data['start_time'].day >= 1) and (
+            data['start_morning'] and not data['start_afternoon'] or
+                not data['end_morning'] and data['end_afternoon']):
+                    raise serializers.ValidationError('Incorrect format occurrence')
+
+        return data
+
+    def create(self, validated_data):
 
         try:
-            absence = SomEnergiaAbsence.objects.filter(
-                worker=validated_data['worker'],
-                absence_type=validated_data['absence_type']
-            )[0]
-        except ObjectDoesNotExist as e:
+            user, start_datetime, end_datetime, absence = self.extract_body_params(validated_data)
+        except ObjectDoesNotExist:
             raise serializers.ValidationError('Absence not found')
 
         occurrence = SomEnergiaOccurrence(
@@ -279,34 +284,23 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         # Override occurrences
         occurrences = SomEnergiaOccurrence.objects.filter(
             (
-                (Q(start_time__gt=start_datetime)
-                &
-                Q(start_time__lt=end_datetime))
-            |
-                (Q(end_time__gt=start_datetime)
-                &
-                Q(end_time__lt=end_datetime))
-            |
-                (Q(start_time__gt=start_datetime)
-                &
-                Q(end_time__lt=end_datetime))
-            )
-            &
-            Q(absence__worker__id=validated_data['worker'])
+                (
+                    Q(start_time__gt=start_datetime) &
+                    Q(start_time__lt=end_datetime)
+                ) | (
+                    Q(end_time__gt=start_datetime) &
+                    Q(end_time__lt=end_datetime)
+                ) | (
+                    Q(start_time__gt=start_datetime) &
+                    Q(end_time__lt=end_datetime)
+                )
+            ) & Q(absence__worker__id=validated_data['worker'])
         ).all()
         if occurrences:
             for o in occurrences:
-                start_concurrence, end_concurrence = find_concurrence_dates(occurrence, o)
-                days = computable_days_between_dates(
-                    start_concurrence,
-                    end_concurrence,
-                    [
-                        rrule.MO,
-                        rrule.TU,
-                        rrule.WE,
-                        rrule.TH,
-                        rrule.FR
-                    ]
+                start_concurrence, end_concurrence = find_concurrence_dates(
+                    occurrence,
+                    o
                 )
                 start_occurrence = o.start_time
                 end_occurrence = o.end_time
@@ -314,10 +308,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 created_by_occurrence = o.created_by
                 modified_by_occurrence = o.modified_by
                 o.delete()
-                worker = Worker.objects.filter(
-                    id=validated_data['worker']
-                ).first()
-                worker.holidays += days
                 if end_occurrence > end_datetime:
                     if validated_data['end_morning'] and not validated_data['end_afternoon']:
                         first_occurrence = SomEnergiaOccurrence(
@@ -356,8 +346,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                             modified_by=modified_by_occurrence
                         )
                         second_occurrence.save()
-
-
 
         try:
             occurrence.save()
