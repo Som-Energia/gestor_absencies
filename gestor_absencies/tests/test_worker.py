@@ -1,12 +1,14 @@
-from django.test import TestCase
+from datetime import datetime as dt
 from os.path import join
+
+from django.test import TestCase
 from django.urls import reverse
+from gestor_absencies.models import Worker
 from gestor_absencies.tests.test_helper import (
     create_absencetype,
-    create_worker,
-    create_vacationpolicy
+    create_vacationpolicy,
+    create_worker
 )
-from gestor_absencies.models import Worker
 
 
 class AdminTest(TestCase):
@@ -58,6 +60,8 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
+                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'working_week': 40
                          },
                         {'email': 'email@example.com',
                          'first_name': 'first_name',
@@ -67,6 +71,8 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
+                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'working_week': 40
                          },
                     ]
                     }
@@ -87,6 +93,8 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
+                    'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'working_week': 40
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -120,7 +128,9 @@ class AdminTest(TestCase):
             'username': 'worker',
             'first_name': 'first_name',
             'last_name': 'last_name',
-            'email': 'newmail@example.com'
+            'email': 'newmail@example.com',
+            'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+            'working_week': 32
         }
         response = self.client.put(
             join(self.base_url, str(self.id_worker)),
@@ -136,6 +146,8 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
+                    'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'working_week': 32
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -166,6 +178,8 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
+                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'working_week': 40
                          },
                         {'email': 'email@example.com',
                          'first_name': 'first_name',
@@ -175,6 +189,8 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
+                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'working_week': 40
                          },
                     ]
                     }
@@ -195,6 +211,8 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
+                    'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'working_week': 40
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -245,7 +263,9 @@ class AdminTest(TestCase):
             'username': 'worker',
             'first_name': 'first_name',
             'last_name': 'last_name',
-            'email': 'newmail@example.com'
+            'email': 'newmail@example.com',
+            'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+            'working_week': 32
         }
         response = self.client.put(
             join(self.base_url, str(self.id_worker)),
@@ -261,6 +281,8 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
+                    'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'working_week': 32
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -287,6 +309,8 @@ class AdminTest(TestCase):
             'holidays': '0.0',
             'gender': '',
             'category': '',
+            'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+            'working_week': 40
         }
         self.test_worker.refresh_from_db()
         self.assertEqual(response.status_code, 200)

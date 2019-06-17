@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext as _
+from django.utils.timezone import now as django_now
 
 class Worker(AbstractUser):
 
@@ -38,6 +39,18 @@ class Worker(AbstractUser):
         null=True,
         on_delete=models.CASCADE,
         verbose_name=_("Vacation Policy"),
+        help_text=_("")
+    )
+
+    working_week = models.IntegerField(
+        default=0,
+        verbose_name=_("Work hours per week"),
+        help_text=_("")
+    )
+
+    contract_date = models.DateTimeField(
+        default=django_now,
+        verbose_name=_("Start contract date"),
         help_text=_("")
     )
 
@@ -256,6 +269,12 @@ class SomEnergiaAbsenceType(Base):
     color = models.CharField(
         max_length=7,
         verbose_name=_('Representation color'),
+        help_text=_("")
+    )
+
+    global_date = models.BooleanField(
+        default=False,
+        verbose_name=_("Global holidays"),
         help_text=_("")
     )
 

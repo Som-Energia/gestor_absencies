@@ -51,7 +51,8 @@ class AdminTest(TestCase):
                       'min_spend': '0.5',
                       'max_spend': '-1.0',
                       'color': '#156420',
-                      'id': self.id_absencetype
+                      'id': self.id_absencetype,
+                      'global_date': False
                       }]
                     }
         self.assertEqual(response.status_code, 200)
@@ -72,6 +73,7 @@ class AdminTest(TestCase):
                     'max_spend': '-1.0',
                     'id': self.id_absencetype,
                     'color': '#156420',
+                    'global_date': False
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -85,7 +87,8 @@ class AdminTest(TestCase):
             'max_duration': 3,
             'min_spend': 2,
             'max_spend': 4,
-            'color': '#000000'
+            'color': '#000000',
+            'global_date': True
         }
         self.client.login(username='admin', password='password')
         response = self.client.post(
@@ -101,6 +104,7 @@ class AdminTest(TestCase):
         self.assertEqual(response.json()['min_spend'], '2.0')
         self.assertEqual(response.json()['max_spend'], '4.0')
         self.assertEqual(response.json()['color'], '#000000')
+        self.assertEqual(response.json()['global_date'], True)
 
     def test__absencetype_put__admin(self):
         self.client.login(username='admin', password='password')
@@ -124,7 +128,8 @@ class AdminTest(TestCase):
                     'min_spend': '0.5',
                     'max_spend': '-1.0',
                     'color': '#156420',
-                    'id': self.id_absencetype
+                    'id': self.id_absencetype,
+                    'global_date': False
                     }
         print(response.json())
         self.assertEqual(response.status_code, 200)
@@ -155,7 +160,8 @@ class AdminTest(TestCase):
                       'min_spend': '0.5',
                       'max_spend': '-1.0',
                       'color': '#156420',
-                      'id': self.id_absencetype
+                      'id': self.id_absencetype,
+                      'global_date': False
                       }]
                     }
         self.assertEqual(response.status_code, 200)
@@ -175,7 +181,8 @@ class AdminTest(TestCase):
                     'min_spend': '0.5',
                     'max_spend': '-1.0',
                     'color': '#156420',
-                    'id': self.id_absencetype
+                    'id': self.id_absencetype,
+                    'global_date': False
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
@@ -190,6 +197,7 @@ class AdminTest(TestCase):
             'min_spend': 2,
             'max_spend': 4,
             'color': '#000000',
+            'global_date': True
         }
         self.client.login(username='username', password='password')
         response = self.client.post(
@@ -251,6 +259,7 @@ class AdminTest(TestCase):
             'min_spend': 2,
             'max_spend': 4,
             'color': '#000000',
+            'global_date': True
         }
         self.client.login(username='admin', password='password')
         response = self.client.post(

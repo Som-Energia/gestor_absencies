@@ -15,7 +15,9 @@ worker_attributes = {
     'first_name': 'first_name',
     'last_name': 'last_name',
     'email': 'email@example.com',
-    'password': 'password'
+    'password': 'password',
+    'contract_date': datetime(2018, 9, 1),
+    'working_week': 40
 }
 
 
@@ -27,6 +29,8 @@ def create_worker(username='username', is_admin=False):
         email=worker_attributes['email'],
         username=username,
         password=worker_attributes['password'],
+        contract_date=worker_attributes['contract_date'],
+        working_week=worker_attributes['working_week'],        
     )
     worker.set_password(worker_attributes['password'])
     worker.is_superuser = is_admin
@@ -65,7 +69,7 @@ def create_vacationpolicy(description, created_by, name='normal', holidays=25):
     return vacationpolicy
 
 
-def create_absencetype(name, description, spend_days, min_duration, max_duration, created_by, color):
+def create_absencetype(name, description, spend_days, min_duration, max_duration, created_by, color, global_date=False):
     absencetype = SomEnergiaAbsenceType(
         name=name,
         description=description,
@@ -77,6 +81,7 @@ def create_absencetype(name, description, spend_days, min_duration, max_duration
         created_by=created_by,
         modified_by=created_by,
         color=color,
+        global_date=global_date,
     )
     absencetype.save()
     return absencetype

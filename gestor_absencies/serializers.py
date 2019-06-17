@@ -33,7 +33,9 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
             'category',
             'gender',
             'holidays',
-            'password'
+            'password',
+            'contract_date',
+            'working_week'
         ]
 
     def update(self, instance, validated_data):
@@ -123,6 +125,7 @@ class SomEnergiaAbsenceTypeSerializer(serializers.HyperlinkedModelSerializer):
             'max_spend',
             'min_spend',
             'color',
+            'global_date',
         ]
 
 
