@@ -27,6 +27,7 @@ class AdminTest(TestCase):
             max_duration=-1,
             created_by=self.test_admin,
             color='#156420',
+            global_date=False
         )
         self.id_absencetype = self.test_absencetype.pk
         self.base_url = reverse('absencetype')
@@ -53,6 +54,42 @@ class AdminTest(TestCase):
                       'color': '#156420',
                       'id': self.id_absencetype,
                       'global_date': False
+                      }]
+                    }
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), expected)
+
+    def test__absencetype_list_global_filter__admin(self):
+        absencetype = create_absencetype(
+            name='Vacances plus',
+            description='Holiday time!',
+            spend_days=1,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin,
+            color='#156420',
+            global_date=True
+        )
+
+        self.client.login(username='admin', password='password')
+        response = self.client.get(
+            self.base_url, {'global_date': True}
+        )
+
+        expected = {'count': 1,
+                    'next': None,
+                    'previous': None,
+                    'results':
+                    [{'name': 'Vacances plus',
+                      'description': 'Holiday time!',
+                      'spend_days': 1,
+                      'min_duration': '0.5',
+                      'max_duration': '-1.0',
+                      'min_spend': '0.5',
+                      'max_spend': '-1.0',
+                      'color': '#156420',
+                      'id': absencetype.pk,
+                      'global_date': True
                       }]
                     }
         self.assertEqual(response.status_code, 200)

@@ -77,11 +77,10 @@ class TeamViewSet(viewsets.ModelViewSet):
 
 
 class MemberViewSet(viewsets.ModelViewSet):
-    queryset = Member.objects.all().order_by('id')
     serializer_class = MemberSerializer
 
     def get_queryset(self):
-        queryset = Member.objects.all()
+        queryset = Member.objects.all().order_by('id')
         team = self.request.query_params.get('team')
         worker = self.request.query_params.get('worker')
 
@@ -111,8 +110,16 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
 
 
 class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
-    queryset = SomEnergiaAbsenceType.objects.all().order_by('id')
     serializer_class = SomEnergiaAbsenceTypeSerializer
+
+    def get_queryset(self):
+        queryset = SomEnergiaAbsenceType.objects.all().order_by('id')
+        global_date = self.request.query_params.get('global_date')
+
+        if global_date:
+            queryset = queryset.filter(global_date=global_date)
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(
