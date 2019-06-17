@@ -148,7 +148,11 @@ class SomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
 class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerializer):
 
     absence_type = serializers.IntegerField(required=True)
-    worker = serializers.IntegerField(required=True)
+    worker = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        required=True
+    )
     start_morning = serializers.BooleanField(default=False, write_only=True)
     start_afternoon = serializers.BooleanField(default=False, write_only=True)
     end_morning = serializers.BooleanField(default=False, write_only=True)
@@ -186,30 +190,21 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             afternoon=validated_data['end_afternoon'],
             is_start=False
         )
-        absence = SomEnergiaAbsence.objects.filter(
-            worker=validated_data['worker'],
-            absence_type=validated_data['absence_type']
+
+        return user, start_datetime, end_datetime
+
+    def get_absence(self, worker, absence_type):
+        return SomEnergiaAbsence.objects.filter(
+            worker=worker,
+            absence_type=absence_type
         )[0]
 
-        return user, start_datetime, end_datetime, absence
-
-    def validate(self, data):
-
-        if (not data['start_morning'] and not data['start_afternoon']) or (
-                not data['end_morning'] and not data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect format occurrence')
-
-        if (data['end_time'].day - data['start_time'].day >= 1) and (
-            data['start_morning'] and not data['start_afternoon'] or
-                not data['end_morning'] and data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect format occurrence')
-
-        return data
-
-    def create(self, validated_data):
-
+    def create_occurrence(self, validated_data, worker, start_datetime, end_datetime, user):
         try:
-            user, start_datetime, end_datetime, absence = self.extract_body_params(validated_data)
+            absence = self.get_absence(
+                worker,
+                validated_data['absence_type']
+            )
         except ObjectDoesNotExist:
             raise serializers.ValidationError('Absence not found')
 
@@ -235,7 +230,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         occurrences = SomEnergiaOccurrence.objects.filter(
             start_time__lte=start_datetime,
             end_time__gte=end_datetime,
-            absence__worker__id=validated_data['worker']
+            absence__worker__id=worker
         ).all()
         if occurrences:
             for o in occurrences:
@@ -297,7 +292,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                     Q(start_time__gt=start_datetime) &
                     Q(end_time__lt=end_datetime)
                 )
-            ) & Q(absence__worker__id=validated_data['worker'])
+            ) & Q(absence__worker__id=worker)
         ).all()
         if occurrences:
             for o in occurrences:
@@ -354,6 +349,34 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             occurrence.save()
         except ValidationError:
             raise serializers.ValidationError('Incorrect occurrence')
+
+        return occurrence
+
+    def validate(self, data):
+
+        if (not data['start_morning'] and not data['start_afternoon']) or (
+                not data['end_morning'] and not data['end_afternoon']):
+                    raise serializers.ValidationError('Incorrect format occurrence')
+
+        if (data['end_time'].day - data['start_time'].day >= 1) and (
+            data['start_morning'] and not data['start_afternoon'] or
+                not data['end_morning'] and data['end_afternoon']):
+                    raise serializers.ValidationError('Incorrect format occurrence')
+
+        return data
+
+    def create(self, validated_data):
+
+        user, start_datetime, end_datetime = self.extract_body_params(validated_data)
+        
+        for worker in validated_data['worker']:
+            occurrence = self.create_occurrence(
+                validated_data,
+                worker,
+                start_datetime,
+                end_datetime,
+                user
+            )
 
         occurrence.worker = validated_data['worker']
         occurrence.absence_type = validated_data['absence_type']

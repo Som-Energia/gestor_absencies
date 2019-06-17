@@ -252,7 +252,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -267,7 +267,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], self.id_absencetype)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -284,11 +284,62 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             )
         )
 
+    def test__post_multiple_occurrence(self):
+        worker = create_worker()
+        start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
+        body = {
+            'absence_type': self.id_absencetype,
+            'worker': [self.id_admin, worker.pk],
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 3, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['absence_type'], self.id_absencetype)
+        self.assertEqual(response.json()['worker'], [self.id_admin, worker.pk])
+        self.assertEqual(
+            response.json()['start_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                (start_time).replace(hour=9, minute=0, second=0))
+        )
+        self.assertEqual(
+            response.json()['end_time'],
+            '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                (calculate_occurrence_dates(start_time, 3, 0)).replace(
+                    hour=17,
+                    minute=0,
+                    second=0
+                )
+            )
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__absence_type=self.id_absencetype,
+                absence__worker=self.id_admin
+            ).count(),
+            2
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__absence_type=self.id_absencetype,
+                absence__worker=worker.pk
+            ).count(),
+            1
+        )
+
     def test__post_passade_occurrence(self):
         start_time = (datetime.datetime.now() - td(days=3)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -315,7 +366,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() - td(hours=2)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -331,7 +382,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], self.id_absencetype)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -362,7 +413,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=3)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -378,7 +429,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -409,7 +460,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -425,7 +476,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -456,7 +507,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=30)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -488,7 +539,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=3)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -506,7 +557,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -537,7 +588,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=3)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -571,7 +622,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -589,7 +640,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -620,7 +671,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = self.testoccurrence_start_time
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': False,
@@ -638,7 +689,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -669,7 +720,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': False,
             'start_afternoon': True,
@@ -687,7 +738,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -718,7 +769,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=1)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': False,
@@ -749,7 +800,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=1)).replace(microsecond=0)
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': False,
             'start_afternoon': False,
@@ -782,7 +833,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -847,7 +898,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -913,7 +964,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -978,7 +1029,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time,
             'start_morning': True,
             'start_afternoon': False,
@@ -1043,7 +1094,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time,
             'start_morning': False,
             'start_afternoon': True,
@@ -1123,7 +1174,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': False,
@@ -1192,7 +1243,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         start_time = (datetime.datetime.now() + td(days=2)).replace(hour=10, microsecond=0)
         body = {
             'absence_type': self.test_absencetype.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -1227,7 +1278,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -1244,7 +1295,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], absence_type.pk)
-        self.assertEqual(response.json()['worker'], self.id_admin)
+        self.assertEqual(response.json()['worker'], [self.id_admin])
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -1292,7 +1343,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -1368,7 +1419,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': self.id_admin,
+            'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
