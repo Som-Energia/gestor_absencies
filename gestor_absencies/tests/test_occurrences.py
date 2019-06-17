@@ -335,6 +335,51 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             1
         )
 
+    def test__transaction_multiple_occurrence(self):
+        worker = create_worker()
+        worker.holidays = 0
+        worker.save()
+        absence_type = create_absencetype(
+            name='Vacances',
+            description='Vacances',
+            spend_days=-1,
+            min_duration=3,
+            max_duration=3,
+            created_by=self.test_admin,
+            color='#156420',
+        )
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': [self.id_admin, worker.pk],
+            'start_time': self.testoccurrence_start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(
+                self.testoccurrence_start_time, 3, 0
+            ),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__absence_type=absence_type.pk
+            ).count(),
+            0
+        )
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                absence__absence_type=self.id_absencetype
+            ).count(),
+            1
+        )
+        self.assertEqual(response.json(), ['Not enough holidays'])
+
     def test__post_passade_occurrence(self):
         start_time = (datetime.datetime.now() - td(days=3)).replace(microsecond=0)
         body = {

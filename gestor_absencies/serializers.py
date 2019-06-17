@@ -17,7 +17,7 @@ from .models import (
     VacationPolicy,
     Worker
 )
-
+from django.db import transaction
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
@@ -365,10 +365,11 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
         return data
 
+    @transaction.atomic
     def create(self, validated_data):
 
         user, start_datetime, end_datetime = self.extract_body_params(validated_data)
-        
+
         for worker in validated_data['worker']:
             occurrence = self.create_occurrence(
                 validated_data,
