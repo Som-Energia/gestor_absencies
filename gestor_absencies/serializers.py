@@ -199,14 +199,15 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             absence_type=absence_type
         )[0]
 
-    def create_occurrence(self, validated_data, worker, start_datetime, end_datetime, user):
-        try:
-            absence = self.get_absence(
-                worker,
-                validated_data['absence_type']
-            )
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError('Absence not found')
+    def get_global_dates_occurrences(self, worker, start_period, end_period):
+        return SomEnergiaOccurrence.objects.filter(
+            absence__worker=worker,
+            absence__absence_type__global_date=True,
+            start_time__gte=start_period,
+            end_time__lte=end_period
+        )
+
+    def create_occurrence(self, worker, start_datetime, end_datetime, user, absence):
 
         occurrence = SomEnergiaOccurrence(
             start_time=start_datetime,
@@ -216,6 +217,15 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             modified_by=user
         )
         duration = occurrence.day_counter()
+        global_dates = self.get_global_dates_occurrences(
+            worker=worker,
+            start_period=start_datetime,
+            end_period=end_datetime
+        )
+        global_dates_duration = 0
+        for global_date in global_dates:
+            global_dates_duration += global_date.day_counter()
+        duration -= global_dates_duration
         if ((occurrence.absence.absence_type.max_duration != -1 and
              abs(duration) > occurrence.absence.absence_type.max_duration) or
                 abs(duration) < occurrence.absence.absence_type.min_duration):
@@ -224,7 +234,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 raise serializers.ValidationError('Can\'t create a passade occurrence')
         if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
                 raise serializers.ValidationError('Not enough holidays')
-
 
         #Split occurrence
         occurrences = SomEnergiaOccurrence.objects.filter(
@@ -241,7 +250,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 modified_by_occurrence = o.modified_by
                 o.delete()
                 if start_occurrence < start_datetime:
-                    if validated_data['start_afternoon'] and not validated_data['start_morning']:
+                    if start_datetime.hour == 13:
                         first_occurrence = SomEnergiaOccurrence(
                             start_time=start_occurrence,
                             end_time=start_datetime.replace(hour=13),
@@ -260,7 +269,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                         )
                         first_occurrence.save()
                 if end_occurrence > end_datetime:
-                    if validated_data['end_morning'] and not validated_data['end_afternoon']:
+                    if end_datetime.hour == 13:
                         second_occurrence = SomEnergiaOccurrence(
                             start_time=end_datetime.replace(hour=13),
                             end_time=end_occurrence,
@@ -307,7 +316,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 modified_by_occurrence = o.modified_by
                 o.delete()
                 if end_occurrence > end_datetime:
-                    if validated_data['end_morning'] and not validated_data['end_afternoon']:
+                    if end_datetime.hour == 13:
                         first_occurrence = SomEnergiaOccurrence(
                             start_time=end_datetime.replace(hour=13),
                             end_time=end_occurrence,
@@ -326,7 +335,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                         )
                         first_occurrence.save()
                 if start_occurrence < start_datetime:
-                    if validated_data['start_afternoon'] and not validated_data['start_morning']:
+                    if start_datetime.hour == 13:
                         second_occurrence = SomEnergiaOccurrence(
                             start_time=start_occurrence,
                             end_time=end_concurrence.replace(hour=13),
@@ -371,12 +380,20 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         user, start_datetime, end_datetime = self.extract_body_params(validated_data)
 
         for worker in validated_data['worker']:
+            try:
+                absence = self.get_absence(
+                    worker,
+                    validated_data['absence_type']
+                )
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError('Absence not found')
+
             occurrence = self.create_occurrence(
-                validated_data,
                 worker,
                 start_datetime,
                 end_datetime,
-                user
+                user,
+                absence
             )
 
         occurrence.worker = validated_data['worker']

@@ -380,6 +380,52 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         self.assertEqual(response.json(), ['Not enough holidays'])
 
+    def test__post_occurrence_with_global_dates_count_global_dates(self):
+        global_date = create_absencetype(
+            name='Festa nacional',
+            description='Festa nacional',
+            spend_days=0,
+            min_duration=1,
+            max_duration=1,
+            created_by=self.test_admin,
+            color='#000000',
+            global_date=True
+        )
+        occurrence = create_occurrence(
+            absence_type=global_date.pk,
+            worker=self.test_admin,
+            start_time=self.testoccurrence_start_time,
+            end_time=calculate_occurrence_dates(
+                self.testoccurrence_start_time,
+                1,
+                0
+            ),
+        )
+        body = {
+            'absence_type': self.id_absencetype,
+            'worker': [self.id_admin],
+            'start_time': self.testoccurrence_start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(
+                self.testoccurrence_start_time,
+                4,
+                0
+            ),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        print(
+            'test__post_occurrence_with_global_dates_count_global_dates',
+            response.json()
+        )
+        self.assertEqual(response.status_code, 201)
+
     def test__post_passade_occurrence(self):
         start_time = (datetime.datetime.now() - td(days=3)).replace(microsecond=0)
         body = {
