@@ -207,33 +207,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             end_time__lte=end_period
         )
 
-    def create_occurrence(self, worker, start_datetime, end_datetime, user, absence):
-
-        occurrence = SomEnergiaOccurrence(
-            start_time=start_datetime,
-            end_time=end_datetime,
-            absence=absence,
-            created_by=user,
-            modified_by=user
-        )
-        duration = occurrence.day_counter()
-        global_dates = self.get_global_dates_occurrences(
-            worker=worker,
-            start_period=start_datetime,
-            end_period=end_datetime
-        )
-        global_dates_duration = 0
-        for global_date in global_dates:
-            global_dates_duration += global_date.day_counter()
-        duration -= global_dates_duration
-        if ((occurrence.absence.absence_type.max_duration != -1 and
-             abs(duration) > occurrence.absence.absence_type.max_duration) or
-                abs(duration) < occurrence.absence.absence_type.min_duration):
-                    raise serializers.ValidationError('Incorrect duration')
-        elif occurrence.start_time < datetime.datetime.now().replace(hour=0, minute=0):
-                raise serializers.ValidationError('Can\'t create a passade occurrence')
-        if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
-                raise serializers.ValidationError('Not enough holidays')
+    def override_occurrence(self, worker, start_datetime, end_datetime, user, absence, occurrence):
 
         #Split occurrence
         occurrences = SomEnergiaOccurrence.objects.filter(
@@ -354,12 +328,68 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                         )
                         second_occurrence.save()
 
-        try:
-            occurrence.save()
-        except ValidationError:
-            raise serializers.ValidationError('Incorrect occurrence')
+    def recursive_splitter(self, occurrence):
+        first_occurrence = None
+        second_occurrence = None
+        global_occurrences = self.get_global_dates_occurrences(
+            worker=occurrence.absence.worker,
+            start_period=occurrence.start_time,
+            end_period=occurrence.end_time
+        )
+        if len(global_occurrences) > 0:
+            global_occurrence = global_occurrences[0]
+            start_occurrence = occurrence.start_time
+            end_occurrence = occurrence.end_time
+            absence_occurrence = occurrence.absence
+            created_by_occurrence = occurrence.created_by
+            modified_by_occurrence = occurrence.modified_by
+            if start_occurrence < global_occurrence.start_time:
+                if global_occurrence.start_time.hour == 13:
+                    first_occurrence = SomEnergiaOccurrence(
+                        start_time=start_occurrence,
+                        end_time=global_occurrence.start_time.replace(hour=13),
+                        absence=absence_occurrence,
+                        created_by=created_by_occurrence,
+                        modified_by=modified_by_occurrence
+                    )
+                else:
+                    first_occurrence = SomEnergiaOccurrence(
+                        start_time=start_occurrence,
+                        end_time=(global_occurrence.start_time - td(days=1)).replace(hour=17),
+                        absence=absence_occurrence,
+                        created_by=created_by_occurrence,
+                        modified_by=modified_by_occurrence
+                    )
+            if end_occurrence > global_occurrence.end_time:
+                if global_occurrence.end_time.hour == 13:
+                    second_occurrence = SomEnergiaOccurrence(
+                        start_time=global_occurrence.end_time.replace(hour=13),
+                        end_time=end_occurrence,
+                        absence=absence_occurrence,
+                        created_by=created_by_occurrence,
+                        modified_by=modified_by_occurrence
+                    )
+                else:
+                    second_occurrence = SomEnergiaOccurrence(
+                        start_time=(global_occurrence.end_time + td(days=1)).replace(hour=9),
+                        end_time=end_occurrence,
+                        absence=absence_occurrence,
+                        created_by=created_by_occurrence,
+                        modified_by=modified_by_occurrence
+                    )
 
-        return occurrence
+            if first_occurrence and second_occurrence:
+                first_call = self.recursive_splitter(first_occurrence)
+                second_call = self.recursive_splitter(second_occurrence)
+                first_call.extend(second_call)
+                return first_call
+            if first_occurrence:
+                return self.recursive_splitter(first_occurrence)
+            if second_occurrence:
+                return self.recursive_splitter(second_occurrence)
+        else:
+            return [occurrence]
+
 
     def validate(self, data):
 
@@ -380,6 +410,8 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         user, start_datetime, end_datetime = self.extract_body_params(validated_data)
 
         for worker in validated_data['worker']:
+
+
             try:
                 absence = self.get_absence(
                     worker,
@@ -388,13 +420,47 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             except ObjectDoesNotExist:
                 raise serializers.ValidationError('Absence not found')
 
-            occurrence = self.create_occurrence(
-                worker,
-                start_datetime,
-                end_datetime,
-                user,
-                absence
+            occurrence = SomEnergiaOccurrence(
+                start_time=start_datetime,
+                end_time=end_datetime,
+                absence=absence,
+                created_by=user,
+                modified_by=user
             )
+            duration = occurrence.day_counter()
+            global_dates = self.get_global_dates_occurrences(
+                worker=worker,
+                start_period=start_datetime,
+                end_period=end_datetime
+            )
+            global_dates_duration = 0
+            for global_date in global_dates:
+                global_dates_duration += global_date.day_counter()
+            duration -= global_dates_duration
+            if ((occurrence.absence.absence_type.max_duration != -1 and
+                 abs(duration) > occurrence.absence.absence_type.max_duration) or
+                    abs(duration) < occurrence.absence.absence_type.min_duration):
+                        raise serializers.ValidationError('Incorrect duration')
+            elif occurrence.start_time < datetime.datetime.now().replace(hour=0, minute=0):
+                    raise serializers.ValidationError('Can\'t create a passade occurrence')
+            if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
+                    raise serializers.ValidationError('Not enough holidays')
+
+            occurrence_array = self.recursive_splitter(occurrence)
+
+            for occurrence_element in occurrence_array:
+                self.override_occurrence(
+                        worker,
+                        occurrence_element.start_time,
+                        occurrence_element.end_time,
+                        user,
+                        absence,
+                        occurrence_element
+                    )
+                try:
+                    occurrence_element.save()
+                except ValidationError:
+                    raise serializers.ValidationError('Incorrect occurrence')
 
         occurrence.worker = validated_data['worker']
         occurrence.absence_type = validated_data['absence_type']

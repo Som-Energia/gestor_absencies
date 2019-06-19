@@ -420,11 +420,59 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             self.base_url, data=body
         )
 
-        print(
-            'test__post_occurrence_with_global_dates_count_global_dates',
-            response.json()
-        )
         self.assertEqual(response.status_code, 201)
+
+    def test__post_occurrence_with_global_dates_not_override_global_dates(self):
+        global_date = create_absencetype(
+            name='Festa nacional',
+            description='Festa nacional',
+            spend_days=0,
+            min_duration=1,
+            max_duration=1,
+            created_by=self.test_admin,
+            color='#000000',
+            global_date=True
+        )
+        global_occurrence = create_occurrence(
+            absence_type=global_date.pk,
+            worker=self.test_admin,
+            start_time=self.testoccurrence_start_time - td(days=1),
+            end_time=calculate_occurrence_dates(
+                self.testoccurrence_start_time - td(days=1),
+                1,
+                0
+            ).replace(hour=17),
+        )
+        body = {
+            'absence_type': self.id_absencetype,
+            'worker': [self.id_admin],
+            'start_time': self.testoccurrence_start_time - td(days=1),
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(
+                self.testoccurrence_start_time - td(days=1),
+                4,
+                0
+            ),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(SomEnergiaOccurrence.objects.filter(
+            absence__absence_type=global_date
+            ).count(),
+            1
+        )
+        self.assertEqual(SomEnergiaOccurrence.objects.filter(
+            absence__absence_type=self.id_absencetype
+            ).count(),
+            1
+        )
 
     def test__post_passade_occurrence(self):
         start_time = (datetime.datetime.now() - td(days=3)).replace(microsecond=0)
