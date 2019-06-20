@@ -1,13 +1,17 @@
-# from datetime import timedelta as td, datetime as dt
-# import datetime.datetime as dt
 import datetime
 from datetime import timedelta as td
+
 import dateutil.rrule as rrule
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from django.db.models import Q
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from gestor_absencies.common.datetime_calculator import calculate_datetime
+from gestor_absencies.common.utils import (
+    computable_days_between_dates,
+    find_concurrence_dates
+)
 from rest_framework import serializers
-from gestor_absencies.common.utils import computable_days_between_dates, find_concurrence_dates
+
 from .models import (
     Member,
     SomEnergiaAbsence,
@@ -17,7 +21,7 @@ from .models import (
     VacationPolicy,
     Worker
 )
-from django.db import transaction
+
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
@@ -73,7 +77,7 @@ class CreateWorkerSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
-    id = serializers.IntegerField(read_only=True) #TODO: REMOVE ID!!!
+    id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(required=True, max_length=50)
 
     class Meta:
@@ -82,14 +86,14 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MemberSerializer(serializers.HyperlinkedModelSerializer):
-    worker = serializers.PrimaryKeyRelatedField(queryset=Worker.objects, required=False) #TODO: id_worker
-    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects, required=False) #TODO: id:team
+    worker = serializers.PrimaryKeyRelatedField(queryset=Worker.objects, required=False)
+    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects, required=False)
 
     class Meta:
         model = Member
         fields = ['id', 'worker', 'team', 'is_referent', 'is_representant']
 
-    def create(self, validated_data): #TODO: Validation worker and team exist
+    def create(self, validated_data):
         member = Member(
             worker=validated_data['worker'],
             team=validated_data['team']
@@ -199,7 +203,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             absence_type=absence_type
         )[0]
 
-    def get_global_dates_occurrences(self, worker, start_period, end_period):
+    def get_coincident_global_dates_occurrences(self, worker, start_period, end_period):
         return SomEnergiaOccurrence.objects.filter(
             absence__worker=worker,
             absence__absence_type__global_date=True,
@@ -207,73 +211,76 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             end_time__lte=end_period
         )
 
-    def override_occurrence(self, worker, start_datetime, end_datetime, user, absence, occurrence):
+    def create_frontier_occurrences(self, occurrence_to_override, occurrence_to_overrided):
 
-        #Split occurrence
+        first_occurrence = None
+        second_occurrence = None
+        if occurrence_to_override.start_time < occurrence_to_overrided.start_time:
+            if occurrence_to_overrided.start_time.hour == 13:
+                first_occurrence = SomEnergiaOccurrence(
+                    start_time=occurrence_to_override.start_time,
+                    end_time=occurrence_to_overrided.start_time.replace(hour=13),
+                    absence=occurrence_to_override.absence,
+                    created_by=occurrence_to_override.created_by,
+                    modified_by=occurrence_to_override.modified_by
+                )
+            else:
+                first_occurrence = SomEnergiaOccurrence(
+                    start_time=occurrence_to_override.start_time,
+                    end_time=(occurrence_to_overrided.start_time - td(days=1)).replace(hour=17),
+                    absence=occurrence_to_override.absence,
+                    created_by=occurrence_to_override.created_by,
+                    modified_by=occurrence_to_override.modified_by
+                )
+        if occurrence_to_override.end_time > occurrence_to_overrided.end_time:
+            if occurrence_to_overrided.end_time.hour == 13:
+                second_occurrence = SomEnergiaOccurrence(
+                    start_time=occurrence_to_overrided.end_time.replace(hour=13),
+                    end_time=occurrence_to_override.end_time,
+                    absence=occurrence_to_override.absence,
+                    created_by=occurrence_to_override.created_by,
+                    modified_by=occurrence_to_override.modified_by
+                )
+            else:
+                second_occurrence = SomEnergiaOccurrence(
+                    start_time=(occurrence_to_overrided.end_time + td(days=1)).replace(hour=9),
+                    end_time=occurrence_to_override.end_time,
+                    absence=occurrence_to_override.absence,
+                    created_by=occurrence_to_override.created_by,
+                    modified_by=occurrence_to_override.modified_by
+                )
+        return first_occurrence, second_occurrence
+
+    def override_occurrence(self, worker, user, absence, occurrence):
+
         occurrences = SomEnergiaOccurrence.objects.filter(
-            start_time__lte=start_datetime,
-            end_time__gte=end_datetime,
+            start_time__lte=occurrence.start_time,
+            end_time__gte=occurrence.end_time,
             absence__worker__id=worker
         ).all()
         if occurrences:
             for o in occurrences:
-                start_occurrence = o.start_time
-                end_occurrence = o.end_time
-                absence_occurrence = o.absence
-                created_by_occurrence = o.created_by
-                modified_by_occurrence = o.modified_by
+                first_occurrence, second_occurrence = self.create_frontier_occurrences(
+                    occurrence_to_override=o,
+                    occurrence_to_overrided=occurrence
+                )
                 o.delete()
-                if start_occurrence < start_datetime:
-                    if start_datetime.hour == 13:
-                        first_occurrence = SomEnergiaOccurrence(
-                            start_time=start_occurrence,
-                            end_time=start_datetime.replace(hour=13),
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        first_occurrence.save()
-                    else:
-                        first_occurrence = SomEnergiaOccurrence(
-                            start_time=start_occurrence,
-                            end_time=(start_datetime - td(days=1)).replace(hour=17),
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        first_occurrence.save()
-                if end_occurrence > end_datetime:
-                    if end_datetime.hour == 13:
-                        second_occurrence = SomEnergiaOccurrence(
-                            start_time=end_datetime.replace(hour=13),
-                            end_time=end_occurrence,
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        second_occurrence.save()
-                    else:
-                        second_occurrence = SomEnergiaOccurrence(
-                            start_time=(end_datetime + td(days=1)).replace(hour=9),
-                            end_time=end_occurrence,
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        second_occurrence.save()
+                if first_occurrence:
+                    first_occurrence.save()
+                if second_occurrence:
+                    second_occurrence.save()
 
-        # Override occurrences
         occurrences = SomEnergiaOccurrence.objects.filter(
             (
                 (
-                    Q(start_time__gt=start_datetime) &
-                    Q(start_time__lt=end_datetime)
+                    Q(start_time__gt=occurrence.start_time) &
+                    Q(start_time__lt=occurrence.end_time)
                 ) | (
-                    Q(end_time__gt=start_datetime) &
-                    Q(end_time__lt=end_datetime)
+                    Q(end_time__gt=occurrence.start_time) &
+                    Q(end_time__lt=occurrence.end_time)
                 ) | (
-                    Q(start_time__gt=start_datetime) &
-                    Q(end_time__lt=end_datetime)
+                    Q(start_time__gt=occurrence.start_time) &
+                    Q(end_time__lt=occurrence.end_time)
                 )
             ) & Q(absence__worker__id=worker)
         ).all()
@@ -283,113 +290,64 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                     occurrence,
                     o
                 )
-                start_occurrence = o.start_time
-                end_occurrence = o.end_time
-                absence_occurrence = o.absence
-                created_by_occurrence = o.created_by
-                modified_by_occurrence = o.modified_by
-                o.delete()
-                if end_occurrence > end_datetime:
-                    if end_datetime.hour == 13:
-                        first_occurrence = SomEnergiaOccurrence(
-                            start_time=end_datetime.replace(hour=13),
-                            end_time=end_occurrence,
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        first_occurrence.save()
-                    else:
-                        first_occurrence = SomEnergiaOccurrence(
-                            start_time=(end_datetime + td(days=1)).replace(hour=9),
-                            end_time=end_occurrence,
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        first_occurrence.save()
-                if start_occurrence < start_datetime:
-                    if start_datetime.hour == 13:
-                        second_occurrence = SomEnergiaOccurrence(
-                            start_time=start_occurrence,
-                            end_time=end_concurrence.replace(hour=13),
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        second_occurrence.save()
-                    else:
-                        second_occurrence = SomEnergiaOccurrence(
-                            start_time=start_occurrence,
-                            end_time=(end_concurrence - td(days=1)).replace(hour=17),
-                            absence=absence_occurrence,
-                            created_by=created_by_occurrence,
-                            modified_by=modified_by_occurrence
-                        )
-                        second_occurrence.save()
 
-    def recursive_splitter(self, occurrence):
+                first_occurrence, second_occurrence = self.create_frontier_occurrences(
+                    occurrence_to_override=o,
+                    occurrence_to_overrided=occurrence
+                )
+                o.delete()
+                if first_occurrence:
+                    first_occurrence.save()
+                if second_occurrence:
+                    second_occurrence.save()
+
+    def occurrence_splitter_with_global_dates(self, occurrence):
         first_occurrence = None
         second_occurrence = None
-        global_occurrences = self.get_global_dates_occurrences(
+        global_occurrences = self.get_coincident_global_dates_occurrences(
             worker=occurrence.absence.worker,
             start_period=occurrence.start_time,
             end_period=occurrence.end_time
         )
         if len(global_occurrences) > 0:
             global_occurrence = global_occurrences[0]
-            start_occurrence = occurrence.start_time
-            end_occurrence = occurrence.end_time
-            absence_occurrence = occurrence.absence
-            created_by_occurrence = occurrence.created_by
-            modified_by_occurrence = occurrence.modified_by
-            if start_occurrence < global_occurrence.start_time:
-                if global_occurrence.start_time.hour == 13:
-                    first_occurrence = SomEnergiaOccurrence(
-                        start_time=start_occurrence,
-                        end_time=global_occurrence.start_time.replace(hour=13),
-                        absence=absence_occurrence,
-                        created_by=created_by_occurrence,
-                        modified_by=modified_by_occurrence
-                    )
-                else:
-                    first_occurrence = SomEnergiaOccurrence(
-                        start_time=start_occurrence,
-                        end_time=(global_occurrence.start_time - td(days=1)).replace(hour=17),
-                        absence=absence_occurrence,
-                        created_by=created_by_occurrence,
-                        modified_by=modified_by_occurrence
-                    )
-            if end_occurrence > global_occurrence.end_time:
-                if global_occurrence.end_time.hour == 13:
-                    second_occurrence = SomEnergiaOccurrence(
-                        start_time=global_occurrence.end_time.replace(hour=13),
-                        end_time=end_occurrence,
-                        absence=absence_occurrence,
-                        created_by=created_by_occurrence,
-                        modified_by=modified_by_occurrence
-                    )
-                else:
-                    second_occurrence = SomEnergiaOccurrence(
-                        start_time=(global_occurrence.end_time + td(days=1)).replace(hour=9),
-                        end_time=end_occurrence,
-                        absence=absence_occurrence,
-                        created_by=created_by_occurrence,
-                        modified_by=modified_by_occurrence
-                    )
+
+            first_occurrence, second_occurrence = self.create_frontier_occurrences(
+                occurrence_to_override=occurrence,
+                occurrence_to_overrided=global_occurrence
+            )
 
             if first_occurrence and second_occurrence:
-                first_call = self.recursive_splitter(first_occurrence)
-                second_call = self.recursive_splitter(second_occurrence)
+                first_call = self.occurrence_splitter_with_global_dates(first_occurrence)
+                second_call = self.occurrence_splitter_with_global_dates(second_occurrence)
                 first_call.extend(second_call)
                 return first_call
             if first_occurrence:
-                return self.recursive_splitter(first_occurrence)
+                return self.occurrence_splitter_with_global_dates(first_occurrence)
             if second_occurrence:
-                return self.recursive_splitter(second_occurrence)
+                return self.occurrence_splitter_with_global_dates(second_occurrence)
         else:
             return [occurrence]
 
+    def check_duration(self, new_occurrence):
+        duration = new_occurrence.day_counter()
+        coincident_global_dates = self.get_coincident_global_dates_occurrences(
+            worker=new_occurrence.absence.worker,
+            start_period=new_occurrence.start_time,
+            end_period=new_occurrence.end_time
+        )
+        global_dates_duration = 0
+        for global_date in coincident_global_dates:
+            global_dates_duration += global_date.day_counter()
+        duration -= global_dates_duration
+        if ((new_occurrence.absence.absence_type.max_duration != -1 and
+             abs(duration) > new_occurrence.absence.absence_type.max_duration) or
+                abs(duration) < new_occurrence.absence.absence_type.min_duration):
+                    raise serializers.ValidationError('Incorrect duration')
+        elif new_occurrence.start_time < datetime.datetime.now().replace(hour=0, minute=0):
+                raise serializers.ValidationError('Can\'t create a passade occurrence')
+        if duration < 0 and new_occurrence.absence.worker.holidays < abs(duration):
+                raise serializers.ValidationError('Not enough holidays')
 
     def validate(self, data):
 
@@ -411,7 +369,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
         for worker in validated_data['worker']:
 
-
             try:
                 absence = self.get_absence(
                     worker,
@@ -420,39 +377,21 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             except ObjectDoesNotExist:
                 raise serializers.ValidationError('Absence not found')
 
-            occurrence = SomEnergiaOccurrence(
+            new_occurrence = SomEnergiaOccurrence(
                 start_time=start_datetime,
                 end_time=end_datetime,
                 absence=absence,
                 created_by=user,
                 modified_by=user
             )
-            duration = occurrence.day_counter()
-            global_dates = self.get_global_dates_occurrences(
-                worker=worker,
-                start_period=start_datetime,
-                end_period=end_datetime
-            )
-            global_dates_duration = 0
-            for global_date in global_dates:
-                global_dates_duration += global_date.day_counter()
-            duration -= global_dates_duration
-            if ((occurrence.absence.absence_type.max_duration != -1 and
-                 abs(duration) > occurrence.absence.absence_type.max_duration) or
-                    abs(duration) < occurrence.absence.absence_type.min_duration):
-                        raise serializers.ValidationError('Incorrect duration')
-            elif occurrence.start_time < datetime.datetime.now().replace(hour=0, minute=0):
-                    raise serializers.ValidationError('Can\'t create a passade occurrence')
-            if duration < 0 and occurrence.absence.worker.holidays < abs(duration):
-                    raise serializers.ValidationError('Not enough holidays')
 
-            occurrence_array = self.recursive_splitter(occurrence)
+            self.check_duration(new_occurrence)
 
-            for occurrence_element in occurrence_array:
+            splited_new_occurrence = self.occurrence_splitter_with_global_dates(new_occurrence)
+
+            for occurrence_element in splited_new_occurrence:
                 self.override_occurrence(
                         worker,
-                        occurrence_element.start_time,
-                        occurrence_element.end_time,
                         user,
                         absence,
                         occurrence_element
@@ -462,6 +401,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 except ValidationError:
                     raise serializers.ValidationError('Incorrect occurrence')
 
-        occurrence.worker = validated_data['worker']
-        occurrence.absence_type = validated_data['absence_type']
-        return occurrence
+        new_occurrence.worker = validated_data['worker']
+        new_occurrence.absence_type = validated_data['absence_type']
+        return new_occurrence

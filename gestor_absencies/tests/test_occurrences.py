@@ -286,7 +286,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
     def test__post_multiple_occurrence(self):
         worker = create_worker()
-        start_time = (datetime.datetime.now() + td(days=6)).replace(microsecond=0)
+        start_time = (self.testoccurrence_start_time + td(weeks=1)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
             'worker': [self.id_admin, worker.pk],
