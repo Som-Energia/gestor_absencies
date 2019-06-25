@@ -1377,6 +1377,26 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             (start_time - td(days=1)).replace(hour=17, minute=0, second=0)
         )
 
+    def test__worker_can_create_your_occurrence(self):
+        worker = create_worker()
+        start_time = (datetime.datetime.now() + td(days=2)).replace(hour=10, microsecond=0)
+        body = {
+            'absence_type': self.test_absencetype.pk,
+            'worker': [worker.pk],
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 3, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='username', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        print(response.json())
+        self.assertEqual(response.status_code, 201)
+
     def test__worker_cant_create_another_occurrence_worker(self):
         create_worker()
         start_time = (datetime.datetime.now() + td(days=2)).replace(hour=10, microsecond=0)
@@ -1723,7 +1743,7 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         old_datetime = datetime.datetime
         datetime.datetime = self.make_datetime(
             (self.testoccurrence_start_time + td(days=1)).year,
-            (self.testoccurrence_start_time + td(weeks=4)).month,
+            (self.testoccurrence_start_time + td(weeks=8)).month,
             (self.testoccurrence_start_time - td(days=1)).day,
             11
         )

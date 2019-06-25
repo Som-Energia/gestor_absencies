@@ -25,6 +25,14 @@ from .models import (
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
+    vacation_policy = serializers.PrimaryKeyRelatedField(
+        queryset=VacationPolicy.objects,
+        required=False,
+        write_only=True
+    )
+    category = serializers.CharField(max_length=50, required=False)
+    gender = serializers.CharField(max_length=50, required=False)
+    contract_date = serializers.DateTimeField(required=False)
 
     class Meta:
         model = Worker
@@ -39,33 +47,18 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
             'holidays',
             'password',
             'contract_date',
-            'working_week'
-        ]
-
-    def update(self, instance, validated_data):
-        super(WorkerSerializer, self).update(instance, validated_data)
-        if validated_data.get('password'):
-            instance.set_password(validated_data.get('password'))
-        instance.save()
-        return instance
-
-
-class CreateWorkerSerializer(serializers.HyperlinkedModelSerializer):
-    vacation_policy = serializers.PrimaryKeyRelatedField(
-        queryset=VacationPolicy.objects,
-        required=True
-    )
-
-    class Meta:
-        model = Worker
-        fields = [
-            'id', 'first_name', 'last_name', 'email', 'username', 'password', 'vacation_policy'
+            'working_week',
+            'vacation_policy'
         ]
 
     def create(self, validated_data):
         """Create and return a new worker."""
 
         worker = Worker(**validated_data)
+        if not validated_data.get('vacation_policy', None):
+            raise serializers.ValidationError({
+                'vacation_policy': ['This field is required.']
+            })
         if validated_data['password']:
             worker.set_password(validated_data['password'])
         else:
@@ -74,6 +67,15 @@ class CreateWorkerSerializer(serializers.HyperlinkedModelSerializer):
             })
         worker.save()
         return worker
+
+    def update(self, instance, validated_data):
+        super(WorkerSerializer, self).update(instance, validated_data)
+        if validated_data.get('password'):
+            instance.set_password(validated_data.get('password'))
+        # if validated_data.get('contract_date'):
+        #     instance.contract_date = validated_data.get('contract_date').strftime("%Y-%m-%d")
+        instance.save()
+        return instance
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):

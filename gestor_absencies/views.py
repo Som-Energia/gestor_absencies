@@ -11,7 +11,6 @@ from .models import (
 )
 from rest_framework import viewsets
 from .serializers import (
-    CreateWorkerSerializer,
     WorkerSerializer,
     MemberSerializer,
     TeamSerializer,
@@ -35,17 +34,6 @@ logger = logging.getLogger(__name__)
 class WorkerViewSet(viewsets.ModelViewSet):
     queryset = Worker.objects.all().order_by('id')
     serializer_class = WorkerSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = CreateWorkerSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
 
     def perform_create(self, serializer):
         if self.request.user.is_superuser:
@@ -174,7 +162,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer, request):
-        if self.request.user.is_superuser or (self.request.user.pk == self.request.data['worker']):
+        if self.request.user.is_superuser or (str(self.request.user.pk) == self.request.data['worker']):
             serializer.save(
                 created_by=self.request.user,
                 modified_by=self.request.user,

@@ -60,7 +60,7 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'working_week': 40
                          },
                         {'email': 'email@example.com',
@@ -71,7 +71,7 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'working_week': 40
                          },
                     ]
@@ -93,7 +93,7 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
-                    'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'working_week': 40
                     }
         self.assertEqual(response.status_code, 200)
@@ -129,7 +129,7 @@ class AdminTest(TestCase):
             'first_name': 'first_name',
             'last_name': 'last_name',
             'email': 'newmail@example.com',
-            'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+            'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'working_week': 32
         }
         response = self.client.put(
@@ -146,7 +146,7 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
-                    'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'working_week': 32
                     }
         self.assertEqual(response.status_code, 200)
@@ -178,7 +178,7 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'working_week': 40
                          },
                         {'email': 'email@example.com',
@@ -189,7 +189,7 @@ class AdminTest(TestCase):
                          'holidays': '0.0',
                          'gender': '',
                          'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'working_week': 40
                          },
                     ]
@@ -211,7 +211,7 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
-                    'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'working_week': 40
                     }
         self.assertEqual(response.status_code, 200)
@@ -264,7 +264,7 @@ class AdminTest(TestCase):
             'first_name': 'first_name',
             'last_name': 'last_name',
             'email': 'newmail@example.com',
-            'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+            'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'working_week': 32
         }
         response = self.client.put(
@@ -272,7 +272,7 @@ class AdminTest(TestCase):
             data=body,
             content_type='application/json'
         )
-
+        print(response.json())
         expected = {'first_name': 'first_name',
                     'last_name': 'last_name',
                     'email': 'newmail@example.com',
@@ -281,7 +281,7 @@ class AdminTest(TestCase):
                     'holidays': '0.0',
                     'gender': '',
                     'category': '',
-                    'contract_date': dt(2019, 1, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+                    'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'working_week': 32
                     }
         self.assertEqual(response.status_code, 200)
@@ -309,7 +309,7 @@ class AdminTest(TestCase):
             'holidays': '0.0',
             'gender': '',
             'category': '',
-            'contract_date': dt(2018, 9, 1).strftime('%Y-%m-%dT%H:%M:%S'),
+            'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'working_week': 40
         }
         self.test_worker.refresh_from_db()
