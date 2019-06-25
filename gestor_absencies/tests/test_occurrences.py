@@ -1394,7 +1394,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         response = self.client.post(
             self.base_url, data=body
         )
-        print(response.json())
+
         self.assertEqual(response.status_code, 201)
 
     def test__worker_cant_create_another_occurrence_worker(self):

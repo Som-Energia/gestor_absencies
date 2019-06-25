@@ -162,7 +162,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer, request):
-        if self.request.user.is_superuser or (str(self.request.user.pk) == self.request.data['worker']):
+        if self.request.user.is_superuser or (str(self.request.user.pk) in self.request.data['worker']):
             serializer.save(
                 created_by=self.request.user,
                 modified_by=self.request.user,
