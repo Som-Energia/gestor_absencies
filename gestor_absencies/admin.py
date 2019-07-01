@@ -13,8 +13,9 @@ from .models import (
 
 
 @admin.register(Worker)
-class WorkerAdmin(admin.ModelAdmin):
+class WorkerAdmin(UserAdmin):
     list_display = ['email', 'username']
+    fieldsets = ()
 
 
 @admin.register(Team)
