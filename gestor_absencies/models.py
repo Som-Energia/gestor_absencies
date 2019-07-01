@@ -14,15 +14,18 @@ from django.utils.timezone import now as django_now
 class Worker(AbstractUser):
 
     CATEGORY_CHOICES = (
-        ('Tècnic', _('Tècnic')),
-        ('Especialista', _('Especialista')),
-        ('Gerència', _('Especialista'))
+        ('Technical', _('Tècnic')),
+        ('Specialist', _('Especialista')),
+        ('Manager', _('Gerència'))
     )
 
     GENDER_CHOICES = (
-        ('Tècnic', _('Tècnic')),
-        ('Especialista', _('Especialista')),
-        ('Gerència', _('Especialista'))
+        ('Male', _('Home')),
+        ('Female', _('Dona')),
+        ('Intersex', _('Intersex')),
+        ('Trans', _('Trans')),
+        ('Queer', _('Queer')),
+        ('Other', _('Altre')),
     )
 
     category = models.CharField(

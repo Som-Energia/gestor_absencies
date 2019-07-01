@@ -61,6 +61,7 @@ class AdminTest(TestCase):
                          'gender': '',
                          'category': '',
                          'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                         'vacation_policy': None,
                          'working_week': 40
                          },
                         {'email': 'email@example.com',
@@ -72,6 +73,7 @@ class AdminTest(TestCase):
                          'gender': '',
                          'category': '',
                          'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                         'vacation_policy': None,
                          'working_week': 40
                          },
                     ]
@@ -94,6 +96,7 @@ class AdminTest(TestCase):
                     'gender': '',
                     'category': '',
                     'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                    'vacation_policy': None,
                     'working_week': 40
                     }
         self.assertEqual(response.status_code, 200)
@@ -168,6 +171,7 @@ class AdminTest(TestCase):
                          'gender': '',
                          'category': '',
                          'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                         'vacation_policy': None,
                          'working_week': 40
                          },
                         {'email': 'email@example.com',
@@ -179,6 +183,7 @@ class AdminTest(TestCase):
                          'gender': '',
                          'category': '',
                          'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                         'vacation_policy': None,
                          'working_week': 40
                          },
                     ]
@@ -201,6 +206,7 @@ class AdminTest(TestCase):
                     'gender': '',
                     'category': '',
                     'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                    'vacation_policy': None,
                     'working_week': 40
                     }
         self.assertEqual(response.status_code, 200)
@@ -271,6 +277,7 @@ class AdminTest(TestCase):
                     'gender': '',
                     'category': '',
                     'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+                    'vacation_policy': None,
                     'working_week': 32
                     }
         self.assertEqual(response.status_code, 200)
@@ -299,6 +306,7 @@ class AdminTest(TestCase):
             'gender': '',
             'category': '',
             'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+            'vacation_policy': None,
             'working_week': 40
         }
         self.test_worker.refresh_from_db()

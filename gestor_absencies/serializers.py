@@ -28,7 +28,6 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     vacation_policy = serializers.PrimaryKeyRelatedField(
         queryset=VacationPolicy.objects,
         required=False,
-        write_only=True
     )
     category = serializers.ChoiceField(
         choices=Worker.CATEGORY_CHOICES,
