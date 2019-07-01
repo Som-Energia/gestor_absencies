@@ -30,8 +30,14 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
         required=False,
         write_only=True
     )
-    category = serializers.CharField(max_length=50, required=False)
-    gender = serializers.CharField(max_length=50, required=False)
+    category = serializers.ChoiceField(
+        choices=Worker.CATEGORY_CHOICES,
+        required=False
+    )
+    gender = serializers.ChoiceField(
+        choices=Worker.GENDER_CHOICES,
+        required=False
+    )
     contract_date = serializers.DateTimeField(required=False)
 
     class Meta:

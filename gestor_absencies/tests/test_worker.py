@@ -128,6 +128,7 @@ class AdminTest(TestCase):
             'username': 'worker',
             'first_name': 'first_name',
             'last_name': 'last_name',
+            'category': 'dasgdasfg',
             'email': 'newmail@example.com',
             'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'working_week': 32
@@ -138,19 +139,7 @@ class AdminTest(TestCase):
             content_type='application/json'
         )
 
-        expected = {'first_name': 'first_name',
-                    'last_name': 'last_name',
-                    'email': 'newmail@example.com',
-                    'username': 'worker',
-                    'id': self.id_worker,
-                    'holidays': '0.0',
-                    'gender': '',
-                    'category': '',
-                    'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
-                    'working_week': 32
-                    }
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), expected)
+        self.assertEqual(response.status_code, 400)
 
     def test__worker_delete__admin(self):
         self.client.login(username='admin', password='password')
@@ -346,6 +335,46 @@ class AdminTest(TestCase):
         self.assertEqual(
             response.json(),
             {'vacation_policy': ['This field is required.']}
+        )
+
+    def test__post_with_gender_choice(self):
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'gender': 'random',
+            'email': 'newmail@example.com'
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'gender': ['"random" is not a valid choice.']}
+        )
+
+    def test__post_with_category_choice(self):
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'category': 'random',
+            'email': 'newmail@example.com'
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'category': ['"random" is not a valid choice.']}
         )
 
     def test__create_worker_create_her_somenergiaabsences(self):

@@ -10,13 +10,27 @@ from django.db.models import Q
 from django.utils.translation import gettext as _
 from django.utils.timezone import now as django_now
 
+
 class Worker(AbstractUser):
 
+    CATEGORY_CHOICES = (
+        ('Tècnic', _('Tècnic')),
+        ('Especialista', _('Especialista')),
+        ('Gerència', _('Especialista'))
+    )
+
+    GENDER_CHOICES = (
+        ('Tècnic', _('Tècnic')),
+        ('Especialista', _('Especialista')),
+        ('Gerència', _('Especialista'))
+    )
+
     category = models.CharField(
+        choices=CATEGORY_CHOICES,
         max_length=50,
-        default='',
         verbose_name=_("Category"),
-        help_text=_("")
+        help_text=_(""),
+        editable=True
     )
 
     holidays = models.DecimalField(
@@ -24,14 +38,16 @@ class Worker(AbstractUser):
         decimal_places=1,
         max_digits=10, # ??
         verbose_name=_("Holidays"),
-        help_text=_("")
+        help_text=_(""),
+        editable=True
     )
 
     gender = models.CharField(
+        choices=GENDER_CHOICES,
         max_length=50,
-        default='',
         verbose_name=_("Gender"),
-        help_text=_("")
+        help_text=_(""),
+        editable=True
     )
 
     vacation_policy = models.ForeignKey(
@@ -39,19 +55,22 @@ class Worker(AbstractUser):
         null=True,
         on_delete=models.CASCADE,
         verbose_name=_("Vacation Policy"),
-        help_text=_("")
+        help_text=_(""),
+        editable=True
     )
 
     working_week = models.IntegerField(
         default=0,
         verbose_name=_("Work hours per week"),
-        help_text=_("")
+        help_text=_(""),
+        editable=True
     )
 
     contract_date = models.DateTimeField(
         default=django_now,
         verbose_name=_("Start contract date"),
-        help_text=_("")
+        help_text=_(""),
+        editable=True
     )
 
     def save(self, *args, **kwargs):
