@@ -53,7 +53,10 @@ class SomEnergiaOccurrenceSetupMixin(object):
         )
         self.id_absencetype = self.test_absencetype.pk
 
-        self.test_absence = self.test_admin.absence.all()[0]
+        self.test_absence = SomEnergiaAbsence.objects.get(
+            worker=self.test_admin,
+            absence_type=self.test_absencetype
+        )
         self.id_absence = self.test_absence.pk
 
         self.testoccurrence_start_time = (next_monday() + td(days=2)).replace(hour=9, microsecond=0, minute=0, second=0)
@@ -991,8 +994,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 worker=self.test_admin,
                 absence_type=absence_type
             )),
-            2
-        )#REFACTOR WITH LOGIN
+            1
+        )
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
@@ -1056,8 +1059,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 worker=self.test_admin,
                 absence_type=absence_type
             )),
-            2
-        )#REFACTOR WITH LOGIN
+            1
+        )
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
@@ -1122,8 +1125,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 worker=self.test_admin,
                 absence_type=absence_type
             )),
-            2
-        )#REFACTOR WITH LOGIN
+            1
+        )
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
@@ -1187,8 +1190,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 worker=self.test_admin,
                 absence_type=absence_type
             )),
-            2
-        )#REFACTOR WITH LOGIN
+            1
+        )
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
@@ -1252,8 +1255,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 worker=self.test_admin,
                 absence_type=absence_type
             )),
-            2
-        )#REFACTOR WITH LOGIN
+            1
+        )
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
@@ -1332,8 +1335,8 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 worker=self.test_admin,
                 absence_type=absence_type
             )),
-            2
-        )#REFACTOR WITH LOGIN
+            1
+        )
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
                 absence__worker=self.test_admin,
@@ -1645,10 +1648,30 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
     def test__delete_occurrence(self):
         self.client.login(username='admin', password='password')
-        response = self.client.delete(
+        delete_response = self.client.delete(
             '/'.join([self.base_url, str(self.id_occurrence)])
         )
-        self.assertEqual(response.status_code, 204)
+
+        get_response = self.client.get(
+            self.base_url
+        )
+
+        expected = {'count': 0,
+                    'next': None,
+                    'previous': None,
+                    'results':
+                    []
+                    }
+
+        self.assertEqual(delete_response.status_code, 204)
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                pk=self.test_occurrence.pk
+            ).count(),
+            1
+        )
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.json(), expected)
 
     def test__delete_occurrence__generate_holidays(self):
         absence_type = create_absencetype(

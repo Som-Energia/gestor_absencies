@@ -2,6 +2,7 @@ from os.path import join
 
 from django.test import TestCase
 from django.urls import reverse
+from gestor_absencies.models import Member
 from gestor_absencies.tests.test_helper import (
     create_member,
     create_team,
@@ -16,6 +17,7 @@ class MemberTest(TestCase):
 
         self.test_worker = create_worker()
         self.id_worker = self.test_worker.pk
+        self.test_admin = create_worker(username='admin', is_admin=True)
 
         self.test_team = create_team(created_by=self.test_worker)
         self.id_team = self.test_team.pk
@@ -105,6 +107,12 @@ class MemberTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 204)
+        self.assertEqual(
+            Member.objects.filter(
+                pk=self.member_relation.pk
+            ).count(),
+            1
+        )
 
     def test__update_member(self):
         body = {
@@ -125,6 +133,20 @@ class MemberTest(TestCase):
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
+
+    def test__remove_team_delete_her_relations(self):
+        self.client.login(username='admin', password='password')
+        response = self.client.delete(
+            join(reverse('teams'), str(self.id_team))
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(
+            Member.objects.filter(
+                pk=self.member_relation.pk
+            ).count(),
+            1
+        )
 
     def tearDown(self):
         self.member_relation.delete()

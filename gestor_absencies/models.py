@@ -83,8 +83,18 @@ class Worker(AbstractUser):
                     self.vacation_policy.calculate_proportional_holidays(),
                     0
                 )
-
-        super(Worker, self).save(*args, **kwargs)
+            super(Worker, self).save(*args, **kwargs)
+            absence_type_list = SomEnergiaAbsenceType.objects.all()
+            for absence_type in absence_type_list:
+                absence = SomEnergiaAbsence(
+                    absence_type=absence_type,
+                    worker=self,
+                    created_by=self,
+                    modified_by=self
+                )
+                absence.save()
+        else:
+            super(Worker, self).save(*args, **kwargs)
 
         permission = Permission.objects.get(codename='view_worker')
         self.user_permissions.add(permission)# TODO: refactor
@@ -110,17 +120,6 @@ class Worker(AbstractUser):
         self.user_permissions.add(permission)# TODO: refactor
         permission = Permission.objects.get(codename='delete_somenergiaoccurrence')
         self.user_permissions.add(permission)# TODO: refactor
-
-        # TODO: I per cada save() es tornen a crear les relacions?
-        absence_type_list = SomEnergiaAbsenceType.objects.all()
-        for absence_type in absence_type_list:
-            absence = SomEnergiaAbsence(
-                absence_type=absence_type,
-                worker=self,
-                created_by=self,
-                modified_by=self
-            )
-            absence.save()
 
     def __str__(self):
         return self.username
@@ -154,6 +153,13 @@ class Base(models.Model):
         auto_now=True,
         verbose_name=_("Modified date"),
         help_text=_("Date when this object was modified")
+    )
+
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Deleted At'),
+        help_text=_('Date when object was deleted')
     )
 
 
@@ -229,6 +235,7 @@ class Member(models.Model):
     class Meta:
         ordering = ('is_representant', 'is_referent')
 
+
 class SomEnergiaAbsenceType(Base):
 
     name = models.CharField(
@@ -302,16 +309,18 @@ class SomEnergiaAbsenceType(Base):
 
     def save(self, *args, **kwargs):
 
-        super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
-
-        for worker in Worker.objects.all():
-            absence = SomEnergiaAbsence(
-                absence_type=self,
-                worker=worker,
-                created_by=self.created_by,
-                modified_by=self.modified_by
-            )
-            absence.save()
+        if not self.id:
+            super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
+            for worker in Worker.objects.all():
+                absence = SomEnergiaAbsence(
+                    absence_type=self,
+                    worker=worker,
+                    created_by=self.created_by,
+                    modified_by=self.modified_by
+                )
+                absence.save()
+        else:
+            super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -393,17 +402,12 @@ class SomEnergiaOccurrence(Base):
 
     def save(self, *args, **kwargs):
 
-        self.full_clean()
-        super(SomEnergiaOccurrence, self).save(*args, **kwargs)
-        duration = self.day_counter()
-        if self.absence.absence_type.spend_days != 0:
-            self.absence.worker.holidays += Decimal(duration)
-            self.absence.worker.save()
-
-    def delete(self, *args, **kwargs):
-
-        if self.absence.absence_type.spend_days != 0:
-            self.absence.worker.holidays -= Decimal(self.day_counter())
-            self.absence.worker.save()
-
-        super(SomEnergiaOccurrence, self).delete(*args, **kwargs)
+        if not self.id:
+            self.full_clean()
+            super(SomEnergiaOccurrence, self).save(*args, **kwargs)
+            duration = self.day_counter()
+            if self.absence.absence_type.spend_days != 0:
+                self.absence.worker.holidays += Decimal(duration)
+                self.absence.worker.save()
+        else:
+            super(SomEnergiaOccurrence, self).save(*args, **kwargs)

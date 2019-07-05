@@ -168,16 +168,35 @@ class AdminTest(TestCase):
                     'id': self.id_absencetype,
                     'global_date': False
                     }
-        print(response.json())
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
     def test__absencetype_delete__admin(self):
         self.client.login(username='admin', password='password')
-        response = self.client.delete(
+        delete_response = self.client.delete(
             '/'.join([self.base_url, str(self.id_absencetype)])
         )
-        self.assertEqual(response.status_code, 204)
+
+        get_response = self.client.get(
+            self.base_url
+        )
+
+        expected = {'count': 0,
+                    'next': None,
+                    'previous': None,
+                    'results':
+                    []
+                    }
+
+        self.assertEqual(delete_response.status_code, 204)
+        self.assertEqual(
+            SomEnergiaAbsenceType.objects.filter(
+                pk=self.test_absencetype.pk
+            ).count(),
+            1
+        )
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.json(), expected)
 
     def test__absencetype_list__worker(self):
         self.client.login(username='username', password='password')

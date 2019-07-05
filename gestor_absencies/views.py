@@ -1,4 +1,5 @@
 import logging
+from decimal import Decimal
 
 from .models import (
     Worker,
@@ -49,7 +50,9 @@ class WorkerViewSet(viewsets.ModelViewSet):
 
 
 class TeamViewSet(viewsets.ModelViewSet):
-    queryset = Team.objects.all().order_by('id')
+    queryset = Team.objects.all().filter(
+        deleted_at__isnull=True
+    ).order_by('id')
     serializer_class = TeamSerializer
 
     def perform_create(self, serializer):
@@ -62,6 +65,10 @@ class TeamViewSet(viewsets.ModelViewSet):
         serializer.save(
             modified_by=self.request.user
         )
+
+    def perform_destroy(self, instance):
+        instance.deleted_at = datetime.datetime.now()
+        instance.save()
 
 
 class MemberViewSet(viewsets.ModelViewSet):
@@ -79,9 +86,15 @@ class MemberViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def perform_destroy(self, instance):
+        instance.deleted_at = datetime.datetime.now()
+        instance.save()
+
 
 class VacationPolicyViewSet(viewsets.ModelViewSet):
-    queryset = VacationPolicy.objects.all().order_by('id')
+    queryset = VacationPolicy.objects.filter(
+        deleted_at__isnull=True
+    ).order_by('id')
     serializer_class = VacationPolicySerializer
 
     def perform_create(self, serializer):
@@ -96,12 +109,18 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
             modified_by=self.request.user
         )
 
+    def perform_destroy(self, instance):
+        instance.deleted_at = datetime.datetime.now()
+        instance.save()
+
 
 class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
     serializer_class = SomEnergiaAbsenceTypeSerializer
 
     def get_queryset(self):
-        queryset = SomEnergiaAbsenceType.objects.all().order_by('id')
+        queryset = SomEnergiaAbsenceType.objects.all().filter(
+            deleted_at__isnull=True
+        ).order_by('id')
         global_date = self.request.query_params.get('global_date')
 
         if global_date:
@@ -120,12 +139,18 @@ class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
             modified_by=self.request.user
         )
 
+    def perform_destroy(self, instance):
+        instance.deleted_at = datetime.datetime.now()
+        instance.save()
+
 
 class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
     serializer_class = SomEnergiaOccurrenceSerializer
 
     def get_queryset(self):
-        queryset = SomEnergiaOccurrence.objects.all()
+        queryset = SomEnergiaOccurrence.objects.all().filter(
+            deleted_at__isnull=True
+        )
         worker = self.request.query_params.get('worker')
         team = self.request.query_params.get('team')
         start_period = self.request.query_params.get('start_period')
@@ -182,7 +207,11 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             if instance.start_time < datetime.datetime.now():
                 raise serializers.ValidationError(_('Can not remove a started occurrence'))
             try:
-                instance.delete()
+                if instance.absence.absence_type.spend_days != 0:
+                    instance.absence.worker.holidays -= Decimal(instance.day_counter())
+                    instance.absence.worker.save()
+                instance.deleted_at = datetime.datetime.now()
+                instance.save()
             except ValidationError as e:
                 raise serializers.ValidationError(e.message)
         else:

@@ -267,7 +267,6 @@ class AdminTest(TestCase):
             data=body,
             content_type='application/json'
         )
-        print(response.json())
         expected = {'first_name': 'first_name',
                     'last_name': 'last_name',
                     'email': 'newmail@example.com',
