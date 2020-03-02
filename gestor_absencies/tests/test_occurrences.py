@@ -1,21 +1,17 @@
+import calendar
 import datetime
 from datetime import timedelta as td
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
-from gestor_absencies.tests.test_helper import (
-    calculate_occurrence_dates,
-    create_absencetype,
-    create_occurrence,
-    create_vacationpolicy,
-    create_worker,
-    create_team,
-    create_member,
-    next_monday
-)
-
 from gestor_absencies.models import SomEnergiaAbsence, SomEnergiaOccurrence
+from gestor_absencies.tests.test_helper import (calculate_occurrence_dates,
+                                                create_absencetype,
+                                                create_member,
+                                                create_occurrence, create_team,
+                                                create_vacationpolicy,
+                                                create_worker, next_monday)
 
 
 class SomEnergiaOccurrenceSetupMixin(object):
@@ -1784,7 +1780,10 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         datetime.datetime = self.make_datetime(
             (self.testoccurrence_start_time + td(days=1)).year,
             (self.testoccurrence_start_time - td(weeks=4)).month,
-            30,
+            calendar.monthrange(
+                (self.testoccurrence_start_time + td(days=1)).year,
+                (self.testoccurrence_start_time - td(weeks=4)).month
+            )[1],
             11
         )
         self.client.login(username='admin', password='password')
