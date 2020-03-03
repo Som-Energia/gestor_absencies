@@ -10,7 +10,9 @@ class TeamTest(TestCase):
     def setUp(self):
         self.base_url = reverse('teams')
 
-        self.test_admin = create_worker(username='admin', is_admin=True)
+        self.test_admin = create_worker(
+            username='admin', is_admin=True, email='oriol@somenergia.coop'
+        )
         self.test_worker = create_worker()
 
         self.test_team = create_team(created_by=self.test_admin)

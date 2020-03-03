@@ -14,19 +14,20 @@ from gestor_absencies.models import (
 worker_attributes = {
     'first_name': 'first_name',
     'last_name': 'last_name',
-    'email': 'email@example.com',
     'password': 'password',
     'contract_date': datetime(2018, 9, 1),
     'working_week': 40
 }
 
 
-def create_worker(username='username', is_admin=False):
+def create_worker(
+    username='username', email='email@example.com', is_admin=False
+):
 
     worker = Worker(
         first_name=worker_attributes['first_name'],
         last_name=worker_attributes['last_name'],
-        email=worker_attributes['email'],
+        email=email,
         username=username,
         password=worker_attributes['password'],
         contract_date=worker_attributes['contract_date'],

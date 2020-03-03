@@ -24,6 +24,7 @@ from .models import (
 
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
+    email = serializers.EmailField(required=False)
     password = serializers.CharField(write_only=True, required=False)
     vacation_policy = serializers.PrimaryKeyRelatedField(
         queryset=VacationPolicy.objects,
@@ -63,6 +64,10 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
         if not validated_data.get('vacation_policy', None):
             raise serializers.ValidationError({
                 'vacation_policy': ['This field is required.']
+            })
+        if not validated_data.get('email', None):
+            raise serializers.ValidationError({
+                'email': ['This field is required.']
             })
         if validated_data['password']:
             worker.set_password(validated_data['password'])

@@ -27,8 +27,11 @@ class SomEnergiaOccurrenceSetupMixin(object):
 
         self.base_url = reverse('absences')
 
-        self.test_admin = create_worker(username='admin', is_admin=True)
+        self.test_admin = create_worker(
+            username='admin', email='oriol@somenergia.coop', is_admin=True
+        )
         self.id_admin = self.test_admin.pk
+        self.test_worker = create_worker()
 
         self.test_vacationpolicy = create_vacationpolicy(
             description='normal vacation policy',
@@ -76,6 +79,7 @@ class SomEnergiaOccurrenceSetupMixin(object):
         self.test_vacationpolicy.delete()
         self.test_admin.delete()
         self.test_absencetype.delete()
+        self.test_worker.delete()
 
 
 class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
@@ -108,10 +112,9 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__list_occurrences_with_worker_filter(self):
-        worker = create_worker()
         create_occurrence(
             absence_type=self.test_absencetype,
-            worker=worker,
+            worker=self.test_worker,
             start_time=self.testoccurrence_start_time,
             end_time=calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
@@ -120,7 +123,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.client.login(username='admin', password='password')
         response = self.client.get(
-            self.base_url, {'worker': [worker.pk]}
+            self.base_url, {'worker': [self.test_worker.pk]}
         )
 
 
@@ -132,7 +135,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             response.json()['results'][0]['absence_type'], self.id_absencetype
         )
         self.assertEqual(
-            response.json()['results'][0]['worker'], worker.pk
+            response.json()['results'][0]['worker'], self.test_worker.pk
         )
         self.assertEqual(
             response.json()['results'][0]['start_time'],
@@ -146,12 +149,11 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__list_occurrences_with_team_filter(self):
-        worker = create_worker()
         team = create_team(created_by=self.test_admin)
-        create_member(worker=worker, team=team)
+        create_member(worker=self.test_worker, team=team)
         self.test_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
-            worker=worker,
+            worker=self.test_worker,
             start_time=self.testoccurrence_start_time,
             end_time=calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
@@ -171,7 +173,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             response.json()['results'][0]['absence_type'], self.id_absencetype
         )
         self.assertEqual(
-            response.json()['results'][0]['worker'], worker.pk
+            response.json()['results'][0]['worker'], self.test_worker.pk
         )
         self.assertEqual(
             response.json()['results'][0]['start_time'],
@@ -186,12 +188,11 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
     def test__list_occurrences_with_interval_dates_filter(self):
         start_time = (datetime.datetime.now() + td(days=10)).replace(microsecond=0)
-        worker = create_worker()
         team = create_team(created_by=self.test_admin)
-        create_member(worker=worker, team=team)
+        create_member(worker=self.test_worker, team=team)
         self.test_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
-            worker=worker,
+            worker=self.test_worker,
             start_time=start_time,
             end_time=calculate_occurrence_dates(
                 start_time, 3, 0
@@ -200,7 +201,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         second_start_time = calculate_occurrence_dates(start_time, 5, 0)
         self.second_test_occurrence = create_occurrence(
             absence_type=self.test_absencetype,
-            worker=worker,
+            worker=self.test_worker,
             start_time=second_start_time,
             end_time=calculate_occurrence_dates(
                 second_start_time, 3, 0
@@ -284,11 +285,10 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__post_multiple_occurrence(self):
-        worker = create_worker()
         start_time = (self.testoccurrence_start_time + td(weeks=1)).replace(microsecond=0)
         body = {
             'absence_type': self.id_absencetype,
-            'worker': [self.id_admin, worker.pk],
+            'worker': [self.id_admin, self.test_worker.pk],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -303,7 +303,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], self.id_absencetype)
-        self.assertEqual(response.json()['worker'], [self.id_admin, worker.pk])
+        self.assertEqual(
+            response.json()['worker'], [self.id_admin, self.test_worker.pk]
+        )
         self.assertEqual(
             response.json()['start_time'],
             '{0:%Y-%m-%dT%H:%M:%S}'.format(
@@ -329,15 +331,14 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(
             SomEnergiaOccurrence.objects.filter(
                 absence__absence_type=self.id_absencetype,
-                absence__worker=worker.pk
+                absence__worker=self.test_worker.pk
             ).count(),
             1
         )
 
     def test__transaction_multiple_occurrence(self):
-        worker = create_worker()
-        worker.holidays = 0
-        worker.save()
+        self.test_worker.holidays = 0
+        self.test_worker.save()
         absence_type = create_absencetype(
             name='Vacances',
             description='Vacances',
@@ -349,7 +350,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         body = {
             'absence_type': absence_type.pk,
-            'worker': [self.id_admin, worker.pk],
+            'worker': [self.id_admin, self.test_worker.pk],
             'start_time': self.testoccurrence_start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -1377,11 +1378,10 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
     def test__worker_can_create_your_occurrence(self):
-        worker = create_worker()
         start_time = (datetime.datetime.now() + td(days=2)).replace(hour=10, microsecond=0)
         body = {
             'absence_type': self.test_absencetype.pk,
-            'worker': [worker.pk],
+            'worker': [self.test_worker.pk],
             'start_time': start_time,
             'start_morning': True,
             'start_afternoon': True,
@@ -1397,7 +1397,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.status_code, 201)
 
     def test__worker_cant_create_another_occurrence_worker(self):
-        create_worker()
         start_time = (datetime.datetime.now() + td(days=2)).replace(hour=10, microsecond=0)
         body = {
             'absence_type': self.test_absencetype.pk,
@@ -1728,11 +1727,10 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(self.test_admin.holidays, 22)
 
     def test__worker_can_delete_her_occurrences(self):
-        worker = create_worker()
         start_time = (datetime.datetime.now() + td(days=1)).replace(hour=10, microsecond=0, minute=0)
         occurrence = create_occurrence(
             absence_type=self.test_absencetype,
-            worker=worker,
+            worker=self.test_worker,
             start_time=start_time,
             end_time=calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
@@ -1746,7 +1744,6 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.status_code, 204)
 
     def test__worker_cant_delete_another_worker_occurrences(self):
-        worker = create_worker()
         self.client.login(username='username', password='password')
         response = self.client.delete(
             '/'.join([self.base_url, str(self.id_occurrence)])

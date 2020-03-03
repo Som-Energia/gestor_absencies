@@ -28,6 +28,15 @@ class Worker(AbstractUser):
         ('Other', _('Altre')),
     )
 
+    email = models.EmailField(
+        verbose_name=_('email address'),
+        unique=True,
+        editable=True,
+        max_length=50,
+        blank=False,
+        null=False
+    )
+
     category = models.CharField(
         choices=CATEGORY_CHOICES,
         max_length=50,

@@ -14,7 +14,9 @@ from gestor_absencies.tests.test_helper import (
 class AdminTest(TestCase):
     def setUp(self):
         self.test_worker = create_worker()
-        self.test_admin = create_worker(username='admin', is_admin=True)
+        self.test_admin = create_worker(
+            username='admin', is_admin=True, email='oriol@somenergia.coop'
+        )
         self.id_worker = self.test_worker.pk
         self.base_url = reverse('workers')
 
@@ -233,7 +235,9 @@ class AdminTest(TestCase):
         )
 
     def test__worker_cant_put_another_email__worker(self):
-        second_worker = create_worker(username='new_worker')
+        second_worker = create_worker(
+            username='new_worker', email='random@random.coop'
+        )
         self.client.login(username='username', password='password')
         body = {
             'username': 'new_worker',
@@ -420,6 +424,25 @@ class AdminTest(TestCase):
         self.assertEqual(login_response.status_code, 400) #401?
         self.assertEqual(login_response.json(),
             {'non_field_errors': ['Unable to log in with provided credentials.']}
+        )
+
+    def test__admin__post_require_email(self):
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'vacation_policy': self.test_vacation_policy.pk
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json(),
+            {'email': ['This field is required.']}
         )
 
     def test__worker_post_set_create_modified_params(self):

@@ -12,8 +12,7 @@ class AdminTest(TestCase):
         self.base_url = reverse('vacationpolicy')
 
         self.test_admin = create_worker(
-            username='admin',
-            is_admin=True
+            username='admin', is_admin=True, email='oriol@somenergia.coop'
         )
         self.test_worker = create_worker()
 

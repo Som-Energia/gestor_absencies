@@ -17,7 +17,9 @@ class MemberTest(TestCase):
 
         self.test_worker = create_worker()
         self.id_worker = self.test_worker.pk
-        self.test_admin = create_worker(username='admin', is_admin=True)
+        self.test_admin = create_worker(
+            username='admin', is_admin=True, email='oriol@somenergia.coop'
+        )
 
         self.test_team = create_team(created_by=self.test_worker)
         self.id_team = self.test_team.pk

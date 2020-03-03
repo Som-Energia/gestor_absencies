@@ -15,8 +15,7 @@ class AdminTest(TestCase):
 
     def setUp(self):
         self.test_admin = create_worker(
-            username='admin',
-            is_admin=True
+            username='admin', is_admin=True, email='oriol@somenergia.coop'
         )
 
         self.test_absencetype = create_absencetype(
