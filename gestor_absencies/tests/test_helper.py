@@ -1,15 +1,10 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
 from dateutil import rrule
-from gestor_absencies.models import (
-    Member,
-    SomEnergiaAbsence,
-    SomEnergiaAbsenceType,
-    SomEnergiaOccurrence,
-    Team,
-    VacationPolicy,
-    Worker
-)
+from gestor_absencies.models import (Member, SomEnergiaAbsence,
+                                     SomEnergiaAbsenceType,
+                                     SomEnergiaOccurrence, Team,
+                                     VacationPolicy, Worker)
 
 worker_attributes = {
     'first_name': 'first_name',

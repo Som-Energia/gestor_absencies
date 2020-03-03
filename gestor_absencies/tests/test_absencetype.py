@@ -1,14 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
-from gestor_absencies.models import (
-    SomEnergiaAbsence,
-    SomEnergiaAbsenceType,
-    Worker
-)
-from gestor_absencies.tests.test_helper import (
-    create_absencetype,
-    create_worker
-)
+from gestor_absencies.models import (SomEnergiaAbsence, SomEnergiaAbsenceType,
+                                     Worker)
+from gestor_absencies.tests.test_helper import (create_absencetype,
+                                                create_worker)
 
 
 class AdminTest(TestCase):

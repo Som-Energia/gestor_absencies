@@ -1,10 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 from gestor_absencies.models import VacationPolicy
-from gestor_absencies.tests.test_helper import (
-    create_vacationpolicy,
-    create_worker
-)
+from gestor_absencies.tests.test_helper import (create_vacationpolicy,
+                                                create_worker)
 
 
 class AdminTest(TestCase):

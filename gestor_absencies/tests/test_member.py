@@ -3,11 +3,8 @@ from os.path import join
 from django.test import TestCase
 from django.urls import reverse
 from gestor_absencies.models import Member
-from gestor_absencies.tests.test_helper import (
-    create_member,
-    create_team,
-    create_worker
-)
+from gestor_absencies.tests.test_helper import (create_member, create_team,
+                                                create_worker)
 
 
 class MemberTest(TestCase):

@@ -7,8 +7,8 @@ from django.contrib.auth.models import AbstractUser, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-from django.utils.translation import gettext as _
 from django.utils.timezone import now as django_now
+from django.utils.translation import gettext as _
 
 
 class Worker(AbstractUser):

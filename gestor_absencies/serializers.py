@@ -6,21 +6,12 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from gestor_absencies.common.datetime_calculator import calculate_datetime
-from gestor_absencies.common.utils import (
-    computable_days_between_dates,
-    find_concurrence_dates
-)
+from gestor_absencies.common.utils import (computable_days_between_dates,
+                                           find_concurrence_dates)
 from rest_framework import serializers
 
-from .models import (
-    Member,
-    SomEnergiaAbsence,
-    SomEnergiaAbsenceType,
-    SomEnergiaOccurrence,
-    Team,
-    VacationPolicy,
-    Worker
-)
+from .models import (Member, SomEnergiaAbsence, SomEnergiaAbsenceType,
+                     SomEnergiaOccurrence, Team, VacationPolicy, Worker)
 
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
