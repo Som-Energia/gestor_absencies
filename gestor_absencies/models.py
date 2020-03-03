@@ -121,6 +121,10 @@ class Worker(AbstractUser):
         permission = Permission.objects.get(codename='delete_somenergiaoccurrence')
         self.user_permissions.add(permission)# TODO: refactor
 
+
+    class Meta:
+        ordering = ('email',)
+
     def __str__(self):
         return self.username
 
