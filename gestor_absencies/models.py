@@ -384,10 +384,10 @@ class SomEnergiaOccurrence(Base):
     )
 
     def day_counter(self):
-		"""
-		Given an occurrency tells the number of days to be
-		added to the pending holidays because of it.
-		"""
+        """
+        Given an occurrency tells the number of days to be
+        added to the pending holidays because of it.
+        """
         if self.absence.absence_type.spend_days > 0:
             byweekday = [rrule.SA, rrule.SU]
         else:
