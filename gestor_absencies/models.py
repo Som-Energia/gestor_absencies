@@ -105,31 +105,24 @@ class Worker(AbstractUser):
         else:
             super(Worker, self).save(*args, **kwargs)
 
-        permission = Permission.objects.get(codename='view_worker')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='change_worker')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='view_team')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='view_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='add_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='change_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='delete_member')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='view_somenergiaabsencetype')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='view_vacationpolicy')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='view_somenergiaoccurrence')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='add_somenergiaoccurrence')
-        self.user_permissions.add(permission)# TODO: refactor
-        permission = Permission.objects.get(codename='delete_somenergiaoccurrence')
-        self.user_permissions.add(permission)# TODO: refactor
-
+    
+        views = [
+            'view_worker',
+            'change_worker',
+            'view_team',
+            'view_member',
+            'add_member',
+            'change_member',
+            'delete_member',
+            'view_somenergiaabsencetype',
+            'view_vacationpolicy',
+            'view_somenergiaoccurrence',
+            'add_somenergiaoccurrence',
+            'delete_somenergiaoccurrence',
+        ]
+        for view in views:
+            permission = Permission.objects.get(codename=view)
+            self.user_permissions.add(permission)
 
     class Meta:
         ordering = ('email',)
