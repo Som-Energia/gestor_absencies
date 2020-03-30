@@ -5,7 +5,7 @@ import yaml
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 with open(os.path.join(BASE_DIR, 'config/settings/config.yaml')) as f:
-    config = yaml.load(f.read())
+    config = yaml.load(f.read(), Loader=yaml.FullLoader)
 
 
 DEBUG = True
