@@ -11,54 +11,69 @@ from django.utils.timezone import now as django_now
 from django.utils.translation import gettext as _
 
 
+class GenderChoices:
+
+    MALE = 'male'
+    FEMALE = 'female'
+    INTER = 'intersex'
+    TRANS = 'trans'
+    QUEER = 'queer'
+    OTHER = 'other'
+
+    choices = (
+        (MALE, _('Home')),
+        (FEMALE, _('Dona')),
+        (INTER, _('Intersex')),
+        (TRANS, _('Trans')),
+        (QUEER, _('Queer')),
+        (OTHER, _('Altre')),
+    )
+
+class CategoryChoices:
+
+    TECHNICAL = 'technical'
+    SPECIALIST = 'specialist'
+    MANAGER = 'manager'
+
+    choices = (
+        (TECHNICAL, _('Tècnic')),
+        (SPECIALIST, _('Especialista')),
+        (MANAGER, _('Gerència'))
+    )
+
+
 class Worker(AbstractUser):
 
-    CATEGORY_CHOICES = (
-        ('Technical', _('Tècnic')),
-        ('Specialist', _('Especialista')),
-        ('Manager', _('Gerència'))
-    )
-
-    GENDER_CHOICES = (
-        ('Male', _('Home')),
-        ('Female', _('Dona')),
-        ('Intersex', _('Intersex')),
-        ('Trans', _('Trans')),
-        ('Queer', _('Queer')),
-        ('Other', _('Altre')),
-    )
-
     email = models.EmailField(
-        verbose_name=_('email address'),
+        max_length=255,
         unique=True,
-        editable=True,
-        max_length=50,
-        blank=False,
-        null=False
+        verbose_name=_('email address'),
+        help_text=_('Email of the worker'),
+        editable=True
     )
 
     category = models.CharField(
-        choices=CATEGORY_CHOICES,
+        choices=CategoryChoices.choices,
         max_length=50,
         verbose_name=_("Category"),
-        help_text=_(""),
+        help_text=_("Category of the worker"),
         editable=True
     )
 
     holidays = models.DecimalField(
         default=0,
         decimal_places=1,
-        max_digits=10, # ??
+        max_digits=4, # ??
         verbose_name=_("Holidays"),
-        help_text=_(""),
+        help_text=_("Holidays that still has this worker"),
         editable=True
     )
 
     gender = models.CharField(
-        choices=GENDER_CHOICES,
+        choices=GenderChoices.choices,
         max_length=50,
         verbose_name=_("Gender"),
-        help_text=_(""),
+        help_text=_("Gender of the worker"),
         editable=True
     )
 
@@ -67,21 +82,21 @@ class Worker(AbstractUser):
         null=True,
         on_delete=models.CASCADE,
         verbose_name=_("Vacation Policy"),
-        help_text=_(""),
+        help_text=_("What kind of vacacion policy will have this worker"),
         editable=True
     )
 
     working_week = models.IntegerField(
         default=0,
-        verbose_name=_("Work hours per week"),
-        help_text=_(""),
+        verbose_name=_("Workday"),
+        help_text=_("Work hours per week"),
         editable=True
     )
 
     contract_date = models.DateTimeField(
-        default=django_now,
-        verbose_name=_("Start contract date"),
-        help_text=_(""),
+        null=True,
+        verbose_name=_("Contract date"),
+        help_text=_("When this worker signed its contract"),
         editable=True
     )
 
@@ -105,7 +120,6 @@ class Worker(AbstractUser):
         else:
             super(Worker, self).save(*args, **kwargs)
 
-    
         views = [
             'view_worker',
             'change_worker',
@@ -127,25 +141,28 @@ class Worker(AbstractUser):
     class Meta:
         ordering = ('email',)
 
+    def __repr__(self):
+        return f'<Worker({self.username})>'
+
     def __str__(self):
-        return self.username
+        return self.__repr__()
 
 
 class Base(models.Model):
 
     created_by = models.ForeignKey(
         get_user_model(),
-        related_name='+',
-        verbose_name=_('Created By'),
+        related_name="+",
         on_delete=models.CASCADE,
+        verbose_name=_('Created By'),
         help_text=_('User who created the object')
     )
 
     modified_by = models.ForeignKey(
         get_user_model(),
-        related_name='+',
+        related_name="+",
         on_delete=models.CASCADE,
-        verbose_name=_('Modified By'),
+        verbose_name=_('Modified by'),
         help_text=_('User who modified the object')
     )
 
@@ -164,9 +181,12 @@ class Base(models.Model):
     deleted_at = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name=_('Deleted At'),
+        verbose_name=_('Deleted at'),
         help_text=_('Date when object was deleted')
     )
+
+    class Meta:
+        abstract = True
 
 
 class VacationPolicy(Base):
@@ -174,19 +194,19 @@ class VacationPolicy(Base):
     name = models.CharField(
         max_length=50,
         verbose_name=_("Name"),
-        help_text=_("")
+        help_text=_("Name of this vacation policy")
     )
 
     description = models.CharField(
         max_length=250,
         verbose_name=_("Description"),
-        help_text=_("")
+        help_text=_("Verbose description of this vacations policy")
     )
 
     holidays = models.IntegerField(
         default=0,
-        verbose_name=_("Holidays"),
-        help_text=_("")
+        verbose_name=_("Holidays days"),
+        help_text=_("Number of days that will have this vacacion policy")
     )
 
     def calculate_proportional_holidays(self):
@@ -196,31 +216,50 @@ class VacationPolicy(Base):
         year_proportion = (difference.days) / 365
         return year_proportion * self.holidays
 
+    class Meta:
+        verbose_name_plural = 'Vacation policies'
+
+    def __repr__(self):
+        return f'<VacationPolicy({self.name})>'
+
+    def __str__(self):
+        return self.__repr__()
+
 
 class Team(Base):
 
     name = models.CharField(
         max_length=50,
-        verbose_name=_("Team name"),
-        help_text=_("Team name")
+        verbose_name=_("Name"),
+        help_text=_("Name of the team")
     )
 
     min_worker = models.IntegerField(
         default=0,
-        verbose_name=_("Minimun Workers"),
-        help_text=_("")
+        verbose_name=_("Min workers"),
+        help_text=_("Number of workers of this team")
     )
 
-    members = models.ManyToManyField(Worker, through='Member')
+    members = models.ManyToManyField(
+        Worker,
+        through='Member',
+        through_fields=('team', 'worker'),
+        related_name='teams',
+        verbose_name=_("Members"),
+        help_text=_("Actual Members of this team")
+    )
 
     class Meta:
         ordering = ('name',)
 
+    def __repr__(self):
+        return f'<Team({self.name})>'
+
     def __str__(self):
-        return self.name
+        return self.__repr__()
 
 
-class Member(models.Model):
+class Member(Base):
 
     worker = models.ForeignKey(Worker, on_delete=models.CASCADE)
 
@@ -228,18 +267,24 @@ class Member(models.Model):
 
     is_referent = models.BooleanField(
         default=False,
-        verbose_name=_("Referent in Team"),
-        help_text=_("")
+        verbose_name=_("Referring person in the team"),
+        help_text=_("Flag that indicates if this member is referring")
     )
 
     is_representant = models.BooleanField(
         default=False,
-        verbose_name=_("IT Representant in Team"),
-        help_text=_("")
+        verbose_name=_("IT representative person in the team"),
+        help_text=_("Flag that indicates if this member is representative")
     )
 
     class Meta:
         ordering = ('is_representant', 'is_referent')
+
+    def __repr__(self):
+        return f'<Member({self.worker.username}, {self.team.name})>'
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class SomEnergiaAbsenceType(Base):
@@ -247,70 +292,70 @@ class SomEnergiaAbsenceType(Base):
     name = models.CharField(
         max_length=50,
         unique=True,
-        verbose_name=_("Absece type name"),
+        verbose_name=_("Name"),
         help_text=_("Absece type name")
     )
 
     description = models.CharField(
         max_length=250,
-        verbose_name=_("Absece type description"),
+        verbose_name=_("Description"),
         help_text=_("Absece type description")
     )
 
     spend_days = models.IntegerField(
         default=0,
-        verbose_name=_("Computation days"),
-        help_text=_("")
+        verbose_name=_("Compute days"),
+        help_text=_("Indicates how many days will discount or add this absence type")
     )
 
     max_duration = models.DecimalField(
         default=0,
         decimal_places=1,
-        max_digits=10, # ??
-        verbose_name=_("Maximun Duration"),
-        help_text=_("")
+        max_digits=4,
+        verbose_name=_("Max duration"),
+        help_text=_("Total amount of days that this absence can last")
     )
 
     min_duration = models.DecimalField(
         default=0,
         decimal_places=1,
-        max_digits=10, # ??
-        verbose_name=_("Minimun Duration"),
-        help_text=_("")
+        max_digits=4,
+        verbose_name=_("Min duration"),
+        help_text=_("Minimal amount of days that this absence can last")
     )
 
     max_spend = models.DecimalField(
         default=0,
         decimal_places=1,
-        max_digits=10, # ??
-        verbose_name=_("Maximun Computation"),
-        help_text=_("")
+        max_digits=4, # ??
+        verbose_name=_("Maximun computation"),
+        help_text=_("Maximun of days that will compute this absence type")
     )
 
     min_spend = models.DecimalField(
         default=0,
         decimal_places=1,
-        max_digits=10, # ??
-        verbose_name=_("Minimun Computation"),
-        help_text=_("")
+        max_digits=4,
+        verbose_name=_("Minimun computation"),
+        help_text=_("Minimun of days that will compute this absence type")
     )
 
     required_notify = models.BooleanField(
         default=True,
-        verbose_name=_("Required Notify"),
-        help_text=_("")
+        verbose_name=_("Notify required"),
+        help_text=_("Flag to tell if this absence requiers some kind of notification")
     )
 
     color = models.CharField(
         max_length=7,
-        verbose_name=_('Representation color'),
-        help_text=_("")
+        verbose_name=_("Color"),
+        help_text=_("Color of this type of absence")
     )
 
     global_date = models.BooleanField(
         default=False,
-        verbose_name=_("Global holidays"),
-        help_text=_("")
+        verbose_name=_("Global date"),
+        help_text=_("Check that indentify if this absence type is a global holidays")
     )
 
     def save(self, *args, **kwargs):
@@ -328,8 +373,11 @@ class SomEnergiaAbsenceType(Base):
         else:
             super(SomEnergiaAbsenceType, self).save(*args, **kwargs)
 
+    def __repr__(self):
+        return f"<AbsenceType({self.name})>"
+
     def __str__(self):
-        return self.name
+        return self.__repr__()
 
 
 class SomEnergiaAbsence(Base):
@@ -338,8 +386,8 @@ class SomEnergiaAbsence(Base):
         SomEnergiaAbsenceType,
         related_name='absence',
         on_delete=models.CASCADE,
-        verbose_name=_("Absence Type"),
-        help_text=_("")
+        verbose_name=_("Absence type"),
+        help_text=_("Type of this absence")
     )
 
     worker = models.ForeignKey(
@@ -348,32 +396,35 @@ class SomEnergiaAbsence(Base):
         related_name='absence',
         on_delete=models.CASCADE,
         verbose_name=_("Worker"),
-        help_text=_("")
+        help_text=_("Worker that takes this absence")
     )
 
+    def __repr__(self):
+        return f"<Absence({self.absence_type.name}, {self.worker.username})>"
+
     def __str__(self):
-        return (str(self.worker) + ' - ' + str(self.absence_type))
+        return self.__repr__()
 
 
 class SomEnergiaOccurrence(Base):
 
     start_time = models.DateTimeField(
-        verbose_name=_("Start time occurrence"),
+        verbose_name=_("Start time"),
         help_text=_("Date when this occurrence end")
     )
 
     end_time = models.DateTimeField(
-        verbose_name=_("End time occurrence"),
+        verbose_name=_("End time"),
         help_text=_("Date when this occurrence end")
     )
 
     absence = models.ForeignKey(
         SomEnergiaAbsence,
-        # editable=False,
-        related_name='occurrence',
         on_delete=models.CASCADE,
+        related_name='occurrence',
         verbose_name=_("Absence"),
-        help_text=_("")
+        help_text=_("Absence for this occurrence"),
+        editable=True
     )
 
     def day_counter(self):
@@ -420,3 +471,9 @@ class SomEnergiaOccurrence(Base):
                 self.absence.worker.save()
         else:
             super(SomEnergiaOccurrence, self).save(*args, **kwargs)
+
+    def __repr__(self):
+        return f"<Ocurrence({self.absence.absence_type.name})>"
+
+    def __str__(self):
+        return self.__repr__()
