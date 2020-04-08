@@ -4,6 +4,9 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pyls = "*"
+jedi = "*"
+ipython = "*"
 
 [packages]
 psycopg2 = "<3.0,>=2.7"
@@ -13,7 +16,6 @@ python-dateutil = "*"
 django-cors-headers = "*"
 Django = "<3.0,>=2.0"
 PyYAML = "*"
-ipython = "*"
 uwsgi = "*"
 
 [requires]
