@@ -47,7 +47,9 @@ def create_team(created_by, name='IT'):
 def create_member(worker, team):
     member = Member(
         worker=worker,
-        team=team
+        team=team,
+        created_by=worker,
+        modified_by=worker
     )
     member.save()
     return member

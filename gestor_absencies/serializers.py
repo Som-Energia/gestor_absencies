@@ -101,7 +101,9 @@ class MemberSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         member = Member(
             worker=validated_data['worker'],
-            team=validated_data['team']
+            team=validated_data['team'],
+            created_by=validated_data['created_by'],
+            modified_by=validated_data['modified_by']
         )
         member.save()
         return member

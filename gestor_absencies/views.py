@@ -86,6 +86,27 @@ class MemberViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        serializer = MemberSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, request)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    def perform_create(self, serializer, request):
+        if (self.request.user.is_superuser or
+            (str(self.request.user.pk) in self.request.data['worker'])):
+            serializer.save(
+                created_by=self.request.user,
+                modified_by=self.request.user
+            )
+        else:
+            raise PermissionDenied()
+
     def perform_destroy(self, instance):
         instance.deleted_at = datetime.datetime.now()
         instance.save()
