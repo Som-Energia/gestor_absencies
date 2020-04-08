@@ -8,10 +8,11 @@ from django.contrib.auth.models import AbstractUser, Permission
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-from django.utils.timezone import now as django_now
-from django.utils.translation import gettext as _
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 
 from gestor_absencies.common.utils import find_concurrence_dates
+
 
 class GenderChoices:
 
@@ -429,6 +430,26 @@ class SomEnergiaOccurrence(Base):
         editable=True
     )
 
+    def clean(self):
+        duration = self.day_counter()
+        coincident_global_dates = self.get_coincident_global_dates_occurrences(
+            worker=self.absence.worker,
+            start_period=self.start_time,
+            end_period=self.end_time
+        )
+        global_dates_duration = 0
+        for global_date in coincident_global_dates:
+            global_dates_duration += global_date.day_counter()
+        duration -= global_dates_duration
+        if ((self.absence.absence_type.max_duration != -1 and
+             abs(duration) > self.absence.absence_type.max_duration) or
+             abs(duration) < self.absence.absence_type.min_duration):
+            raise ValidationError(_('Incorrect duration'))
+        elif self.start_time < datetime.datetime.now().replace(hour=0, minute=0):
+            raise ValidationError(_('Can\'t create a passade occurrence'))
+        if duration < 0 and self.absence.worker.holidays < abs(duration):
+            raise ValidationError(_('Not enough holidays'))
+
     def day_counter(self):
         """
         Given an occurrency tells the number of days to be
@@ -591,10 +612,11 @@ class SomEnergiaOccurrence(Base):
     def save(self, *args, **kwargs):
 
         if not self.id:
-            self.full_clean()
             super(SomEnergiaOccurrence, self).save(*args, **kwargs)
             duration = self.day_counter()
-            if self.absence.absence_type.spend_days != 0:
+            ocurrence_compute = self.absence.absence_type.spend_days != 0 and \
+                self.start_time.year == now().year
+            if ocurrence_compute:
                 self.absence.worker.holidays += Decimal(duration)
                 self.absence.worker.save()
         else:

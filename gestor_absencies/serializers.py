@@ -218,31 +218,11 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             end_time__lte=end_period
         )
 
-    def check_duration(self, new_occurrence):
-        duration = new_occurrence.day_counter()
-        coincident_global_dates = self.get_coincident_global_dates_occurrences(
-            worker=new_occurrence.absence.worker,
-            start_period=new_occurrence.start_time,
-            end_period=new_occurrence.end_time
-        )
-        global_dates_duration = 0
-        for global_date in coincident_global_dates:
-            global_dates_duration += global_date.day_counter()
-        duration -= global_dates_duration
-        if ((new_occurrence.absence.absence_type.max_duration != -1 and
-             abs(duration) > new_occurrence.absence.absence_type.max_duration) or
-                abs(duration) < new_occurrence.absence.absence_type.min_duration):
-                    raise serializers.ValidationError('Incorrect duration')
-        elif new_occurrence.start_time < datetime.datetime.now().replace(hour=0, minute=0):
-                raise serializers.ValidationError('Can\'t create a passade occurrence')
-        if duration < 0 and new_occurrence.absence.worker.holidays < abs(duration):
-                raise serializers.ValidationError('Not enough holidays')
-
     def validate(self, data):
 
-        if (not data['start_morning'] and not data['start_afternoon']) or (
-                not data['end_morning'] and not data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect format occurrence')
+        if ((not data['start_morning'] and not data['start_afternoon']) or
+           (not data['end_morning'] and not data['end_afternoon'])):
+            raise serializers.ValidationError('Incorrect format occurrence')
 
         if (data['end_time'].day - data['start_time'].day >= 1) and (
             data['start_morning'] and not data['start_afternoon'] or
@@ -273,8 +253,10 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 created_by=user,
                 modified_by=user
             )
-
-            self.check_duration(new_occurrence)
+            try:
+                new_occurrence.full_clean()
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message_dict['__all__'][0])
 
             splited_new_occurrence = new_occurrence.occurrence_splitter_with_global_dates(new_occurrence)
 
