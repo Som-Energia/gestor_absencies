@@ -633,7 +633,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             absence__absence_type=absence_type,
             start_time__year=datetime.datetime.now().year + 1
         ).first()
-        print(occurrence_next_year.day_counter(), self.test_admin.next_year_holidays())
         expected = {
             'absence_type': absence_type.pk,
             'start_time': '{0:%Y-%m-%dT%H:%M:%S}'.format(start_time.replace(hour=9)),
@@ -1945,6 +1944,45 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
         self.assertEqual(response.status_code, 204)
         datetime.datetime = old_datetime
+
+    def test__can_delete_next_year_occurrence(self):
+        absence_type = create_absencetype(
+            name='vacances',
+            description='Vacances',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin,
+            color='#156420',
+        )
+        start_time = (datetime.datetime(
+            datetime.datetime.now().year + 1, 1, datetime.datetime.now().day
+        )).replace(microsecond=0)
+        occurrence_to_remove = create_occurrence(
+            absence_type=absence_type, worker=self.test_admin,
+            start_time=start_time, end_time=calculate_occurrence_dates(start_time, 10, 0)
+        )
+
+        self.client.login(username='admin', password='password')
+        delete_response = self.client.delete(
+            '/'.join([self.base_url, str(occurrence_to_remove.pk)])
+        )
+        get_response = self.client.get(
+            self.base_url, {'worker': [self.test_worker.pk]}
+        )
+
+        self.assertEqual(delete_response.status_code, 204)
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                pk=occurrence_to_remove.pk,
+                deleted_at=None
+            ).count(),
+            0
+        )
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.json().get('count'), 1) # Global date
+
+
 
 # TODO:
 
