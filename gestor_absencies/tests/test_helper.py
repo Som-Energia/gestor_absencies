@@ -103,6 +103,36 @@ def create_occurrence(absence_type, worker, start_time, end_time, created_by=Non
     return occurrence
 
 
+def create_global_occurrence(start_time, end_time):
+    workers = Worker.objects.all()
+
+    global_occurrence = SomEnergiaAbsenceType(
+        name='Global date',
+        description='',
+        spend_days=0,
+        min_duration=1,
+        max_duration=1,
+        min_spend=1,
+        max_spend=1,
+        created_by=workers[0],
+        modified_by=workers[0],
+        color='#156420',
+        global_date=True,
+    )
+    global_occurrence.save()
+
+    for worker in workers:
+        create_occurrence(
+            absence_type=global_occurrence,
+            worker=worker,
+            start_time=start_time,
+            end_time=end_time
+        )
+
+    return global_occurrence.pk
+
+
+
 def days_between_dates(start_time, end_time, dates_types):
     return len(list(rrule.rrule(
         dtstart=start_time,

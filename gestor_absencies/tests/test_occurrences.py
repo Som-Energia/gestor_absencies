@@ -11,7 +11,8 @@ from gestor_absencies.tests.test_helper import (calculate_occurrence_dates,
                                                 create_member,
                                                 create_occurrence, create_team,
                                                 create_vacationpolicy,
-                                                create_worker, next_monday)
+                                                create_worker, next_monday,
+                                                create_global_occurrence)
 
 
 class SomEnergiaOccurrenceSetupMixin(object):
@@ -72,6 +73,15 @@ class SomEnergiaOccurrenceSetupMixin(object):
             ).replace(hour=17)
         )
         self.id_occurrence = self.test_occurrence.pk
+
+        self.id_global_occurrence = create_global_occurrence(
+            start_time=(datetime.datetime(datetime.datetime.now().year + 1, 1, 1)).replace(
+                hour=9, microsecond=0, minute=0, second=0
+            ),
+            end_time=(datetime.datetime(datetime.datetime.now().year + 1, 1, 1)).replace(
+                hour=15, microsecond=0, minute=0, second=0
+            )
+        )
 
     def tearDown(self):
         if SomEnergiaOccurrence.objects.filter(id=self.id_occurrence).count():
@@ -633,7 +643,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         self.assertEqual(self.test_admin.holidays, 22)
 
-    def test__post_occurrence__not_enough_holidays(self):
+    def test__post_occurrence__not_enough_holidays_actual_year(self):
         absence_type = create_absencetype(
             name='esce',
             description='Escola',
@@ -664,6 +674,48 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), expected)
         self.assertEqual(self.test_admin.holidays, 25)
+    
+    def test__post_occurrence__not_enough_holidays_next_year(self):
+        absence_type = create_absencetype(
+            name='vacances',
+            description='Vacances',
+            spend_days=-1,
+            min_duration=30,
+            max_duration=30,
+            created_by=self.test_admin,
+            color='#156420',
+        )
+        start_time = (datetime.datetime(
+            datetime.datetime.now().year + 1, 1, datetime.datetime.now().day
+        )).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': [self.id_admin],
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 30, -1),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.test_admin.refresh_from_db()
+
+        expected = ['Not enough holidays']
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), expected)
+        self.assertEqual(
+            SomEnergiaOccurrence.objects.filter(
+                start_time__year=datetime.datetime.now().year + 1,
+                end_time__year=datetime.datetime.now().year + 1,
+                absence__worker=self.test_admin,
+                absence__absence_type=absence_type
+            ).count(),
+            0
+        )
 
     def test__post_occurrence__generate_holidays_without_worker_holidays(self):
         absence_type = create_absencetype(
@@ -924,7 +976,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         expected = {'non_field_errors': ['Incorrect format occurrence']}
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), expected)
-
 
     def test__post_cant_empty_day(self):
         absence_type = create_absencetype(
@@ -1636,7 +1687,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             calculate_occurrence_dates(start_time, 2, -1).replace(hour=17)
         )
         self.assertEqual(self.test_admin.holidays, 23)
-
 
 
 class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):

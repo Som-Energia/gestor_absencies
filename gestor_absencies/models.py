@@ -104,11 +104,11 @@ class Worker(AbstractUser):
     )
 
     def nex_year_holidays(self):
-        nexyear_occurrences = SomEnergiaOccurrence.object.filter(
-            start_time__year=now.year + 1,
-            end_time__year=now.year + 1,
+        nexyear_occurrences = SomEnergiaOccurrence.objects.filter(
+            start_time__year=datetime.datetime.now().year + 1,
+            end_time__year=datetime.datetime.now().year + 1,
         )
-        nexyear_holidays = self.absence.worker.holidays
+        nexyear_holidays = self.holidays
         for nexyear_occurrence in nexyear_occurrences:
             if nexyear_occurrence.absence.absence_type.spend_days:
                 nexyear_holidays += nexyear_occurrence.day_counter()
