@@ -101,7 +101,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['count'], 3)
         self.assertEqual(response.json()['next'], None)
         self.assertEqual(response.json()['previous'], None)
         self.assertEqual(
@@ -138,7 +138,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
 
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['count'], 2)
         self.assertEqual(response.json()['next'], None)
         self.assertEqual(response.json()['previous'], None)
         self.assertEqual(
@@ -176,7 +176,7 @@ class SomEnergiaOccurrenceGETTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['count'], 2)
         self.assertEqual(response.json()['next'], None)
         self.assertEqual(response.json()['previous'], None)
         self.assertEqual(
