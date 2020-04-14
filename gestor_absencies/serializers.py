@@ -210,14 +210,6 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
             absence_type=absence_type
         )[0]
 
-    def get_coincident_global_dates_occurrences(self, worker, start_period, end_period):
-        return SomEnergiaOccurrence.objects.filter(
-            absence__worker=worker,
-            absence__absence_type__global_date=True,
-            start_time__gte=start_period,
-            end_time__lte=end_period
-        )
-
     def validate(self, data):
 
         if ((not data['start_morning'] and not data['start_afternoon']) or

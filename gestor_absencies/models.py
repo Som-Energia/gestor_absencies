@@ -103,6 +103,17 @@ class Worker(AbstractUser):
         editable=True
     )
 
+    def nex_year_holidays(self):
+        nexyear_occurrences = SomEnergiaOccurrence.object.filter(
+            start_time__year=now.year + 1,
+            end_time__year=now.year + 1,
+        )
+        nexyear_holidays = self.absence.worker.holidays
+        for nexyear_occurrence in nexyear_occurrences:
+            if nexyear_occurrence.absence.absence_type.spend_days:
+                nexyear_holidays += nexyear_occurrence.day_counter()
+        return nexyear_holidays
+
     def save(self, *args, **kwargs):
         if not self.pk:
             if self.vacation_policy:
@@ -431,6 +442,7 @@ class SomEnergiaOccurrence(Base):
     )
 
     def clean(self):
+        now = datetime.datetime.now()
         duration = self.day_counter()
         coincident_global_dates = self.get_coincident_global_dates_occurrences(
             worker=self.absence.worker,
@@ -441,14 +453,37 @@ class SomEnergiaOccurrence(Base):
         for global_date in coincident_global_dates:
             global_dates_duration += global_date.day_counter()
         duration -= global_dates_duration
-        if ((self.absence.absence_type.max_duration != -1 and
-             abs(duration) > self.absence.absence_type.max_duration) or
-             abs(duration) < self.absence.absence_type.min_duration):
+        incorrect_duration = ((self.absence.absence_type.max_duration != -1 and
+            abs(duration) > self.absence.absence_type.max_duration) or
+            abs(duration) < self.absence.absence_type.min_duration)
+        if incorrect_duration:
             raise ValidationError(_('Incorrect duration'))
-        elif self.start_time < datetime.datetime.now().replace(hour=0, minute=0):
+        elif self.start_time < now.replace(hour=0, minute=0):
             raise ValidationError(_('Can\'t create a passade occurrence'))
-        if duration < 0 and self.absence.worker.holidays < abs(duration):
-            raise ValidationError(_('Not enough holidays'))
+
+        if self.start_time.year == self.end_time.year == now.year:
+            if duration < 0 and self.absence.worker.holidays < abs(duration):
+                raise ValidationError(_('Not enough holidays'))
+        elif self.start_time.year == self.end_time.year == now.year + 1:
+            if duration < 0 and self.absence.worker.nex_year_holidays() < abs(duration):
+                raise ValidationError(_('Not enough holidays'))
+        elif self.start_time.year == now.year and self.end_time.year == now.year + 1:
+            different_year_absences = self.occurrence_splitter_with_global_dates(self) # TODO: Refactor
+            actual_year_outlay = 0
+            nex_year_outlay = 0
+            for occurrence in different_year_absences:
+                if occurrence.start_time.year == now.year:
+                    actual_year_outlay += occurrence.day_counter()
+                else:
+                    nex_year_outlay += occurrence.day_counter()
+
+            if (self.absence.worker.holidays < abs(actual_year_outlay) or
+                self.absence.worker.nex_year_holidays() < abs(nex_year_outlay)):
+                raise ValidationError(_('Not enough holidays'))
+        else:
+            raise ValidationError(_('Incorrect occurrence'))
+
+
 
     def day_counter(self):
         """
