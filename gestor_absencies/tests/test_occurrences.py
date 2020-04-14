@@ -1970,6 +1970,7 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         get_response = self.client.get(
             self.base_url, {'worker': [self.test_worker.pk]}
         )
+        self.test_admin.refresh_from_db()
 
         self.assertEqual(delete_response.status_code, 204)
         self.assertEqual(
@@ -1981,6 +1982,9 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(get_response.json().get('count'), 1) # Global date
+        self.assertEqual(
+            self.test_admin.holidays, self.test_admin.vacation_policy.holidays
+        )
 
 
 

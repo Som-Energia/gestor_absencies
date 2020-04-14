@@ -228,7 +228,10 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             if instance.start_time < datetime.datetime.now():
                 raise serializers.ValidationError(_('Can not remove a started occurrence'))
             try:
-                if instance.absence.absence_type.spend_days != 0:
+                occurrence_compute = instance.absence.absence_type.spend_days != 0 and \
+                    instance.start_time.year == instance.end_time.year == \
+                    datetime.datetime.now().year
+                if occurrence_compute:
                     instance.absence.worker.holidays -= Decimal(instance.day_counter())
                     instance.absence.worker.save()
                 instance.deleted_at = datetime.datetime.now()
