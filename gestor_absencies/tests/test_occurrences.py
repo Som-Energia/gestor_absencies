@@ -12,7 +12,8 @@ from gestor_absencies.tests.test_helper import (calculate_occurrence_dates,
                                                 create_occurrence, create_team,
                                                 create_vacationpolicy,
                                                 create_worker, next_monday,
-                                                create_global_occurrence)
+                                                create_global_occurrence,
+                                                days_between_dates)
 
 
 class SomEnergiaOccurrenceSetupMixin(object):
@@ -588,6 +589,71 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(expected, response.json())
 
+        self.test_admin.refresh_from_db()
+        self.assertEqual(
+            self.test_admin.holidays, self.test_admin.vacation_policy.holidays
+        )
+
+    def test__post_occurrence__year_transition(self):
+        absence_type = create_absencetype(
+            name='vacances',
+            description='Vacances',
+            spend_days=-1,
+            min_duration=0.5,
+            max_duration=-1,
+            created_by=self.test_admin,
+            color='#156420',
+        )
+        start_time = (datetime.datetime(
+            datetime.datetime.now().year, 12, 30
+        )).replace(microsecond=0)
+        body = {
+            'absence_type': absence_type.pk,
+            'worker': [self.id_admin],
+            'start_time': start_time,
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(start_time, 10, 0),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+
+        del(response.json()['id'])
+        occurrence_current_year = SomEnergiaOccurrence.objects.filter(
+            absence__worker=self.test_admin,
+            absence__absence_type=absence_type,
+            start_time__year=datetime.datetime.now().year
+        ).first()
+        occurrence_next_year = SomEnergiaOccurrence.objects.filter(
+            absence__worker=self.test_admin,
+            absence__absence_type=absence_type,
+            start_time__year=datetime.datetime.now().year + 1
+        ).first()
+        print(occurrence_next_year.day_counter(), self.test_admin.next_year_holidays())
+        expected = {
+            'absence_type': absence_type.pk,
+            'start_time': '{0:%Y-%m-%dT%H:%M:%S}'.format(start_time.replace(hour=9)),
+            'end_time': '{0:%Y-%m-%dT%H:%M:%S}'.format(
+                calculate_occurrence_dates(start_time, 10, 0).replace(hour=17)),
+            'worker': [self.id_admin]
+        }
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(expected, response.json())
+        self.test_admin.refresh_from_db()
+        self.assertEqual(
+            self.test_admin.holidays,
+            self.test_admin.vacation_policy.holidays - abs(occurrence_current_year.day_counter())
+        )
+        self.assertEqual(
+            self.test_admin.next_year_holidays(),
+            self.test_admin.vacation_policy.holidays - abs(occurrence_next_year.day_counter())
+        )
+
     def test__post_occurrence__generate_holidays(self):
         absence_type = create_absencetype(
             name='Escola',
@@ -682,7 +748,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         )
         self.assertEqual(self.test_admin.holidays, 22)
 
-    def test__post_occurrence__not_enough_holidays_actual_year(self):
+    def test__post_occurrence__not_enough_holidays_current_year(self):
         absence_type = create_absencetype(
             name='esce',
             description='Escola',
