@@ -1,6 +1,11 @@
 version: "3"
 
 services:
+    redis:
+        image: redis:5.0.8-alpine
+        hostname: redis
+        ports:
+            - "6380:6379"
     db:
         image: postgres:11.2-alpine
         hostname: db

@@ -24,3 +24,12 @@ DATABASES = {
 }
 
 CORS_ORIGIN_WHITELIST = config['whitelist']['develop']
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'redis',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}

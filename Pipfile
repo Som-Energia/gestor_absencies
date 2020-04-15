@@ -18,6 +18,9 @@ django-cors-headers = "*"
 Django = "<3.0,>=2.0"
 PyYAML = "*"
 uwsgi = "*"
+rq = "*"
+rq-scheduler = "*"
+django-rq = "*"
 
 [requires]
 python_version = "3.6"
