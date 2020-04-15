@@ -5,3 +5,4 @@ pyyaml
 djangorestframework-jwt
 python-dateutil
 django-cors-headers
+testfixtures

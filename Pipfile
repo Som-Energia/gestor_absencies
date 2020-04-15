@@ -7,6 +7,7 @@ verify_ssl = true
 pyls = "*"
 jedi = "*"
 ipython = "*"
+testfixtures = "*"
 
 [packages]
 psycopg2 = "<3.0,>=2.7"
