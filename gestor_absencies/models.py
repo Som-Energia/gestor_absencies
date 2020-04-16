@@ -129,7 +129,7 @@ class Worker(AbstractUser):
                     absence_type=absence_type,
                     worker=self,
                     created_by=self,
-                    modified_by=self
+                    updated_by=self
                 )
                 absence.save()
         else:
@@ -173,7 +173,7 @@ class Base(models.Model):
         help_text=_('User who created the object')
     )
 
-    modified_by = models.ForeignKey(
+    updated_by = models.ForeignKey(
         get_user_model(),
         related_name="+",
         on_delete=models.CASCADE,
@@ -181,13 +181,13 @@ class Base(models.Model):
         help_text=_('User who modified the object')
     )
 
-    create_date = models.DateTimeField(
+    created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Create date"),
         help_text=_("Date when this object was saved")
     )
 
-    modified_date = models.DateTimeField(
+    updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Modified date"),
         help_text=_("Date when this object was modified")
@@ -382,7 +382,7 @@ class SomEnergiaAbsenceType(Base):
                     absence_type=self,
                     worker=worker,
                     created_by=self.created_by,
-                    modified_by=self.modified_by
+                    updated_by=self.updated_by
                 )
                 absence.save()
         else:
@@ -538,7 +538,7 @@ class SomEnergiaOccurrence(Base):
                     end_time=occurrence_to_overrided.start_time.replace(hour=13),
                     absence=occurrence_to_override.absence,
                     created_by=occurrence_to_override.created_by,
-                    modified_by=occurrence_to_override.modified_by
+                    updated_by=occurrence_to_override.updated_by
                 )
             else:
                 first_occurrence = SomEnergiaOccurrence(
@@ -546,7 +546,7 @@ class SomEnergiaOccurrence(Base):
                     end_time=(occurrence_to_overrided.start_time - td(days=1)).replace(hour=17),
                     absence=occurrence_to_override.absence,
                     created_by=occurrence_to_override.created_by,
-                    modified_by=occurrence_to_override.modified_by
+                    updated_by=occurrence_to_override.updated_by
                 )
         if occurrence_to_override.end_time > occurrence_to_overrided.end_time:
             if occurrence_to_overrided.end_time.hour == 13:
@@ -555,7 +555,7 @@ class SomEnergiaOccurrence(Base):
                     end_time=occurrence_to_override.end_time,
                     absence=occurrence_to_override.absence,
                     created_by=occurrence_to_override.created_by,
-                    modified_by=occurrence_to_override.modified_by
+                    updated_by=occurrence_to_override.updated_by
                 )
             else:
                 second_occurrence = SomEnergiaOccurrence(
@@ -563,7 +563,7 @@ class SomEnergiaOccurrence(Base):
                     end_time=occurrence_to_override.end_time,
                     absence=occurrence_to_override.absence,
                     created_by=occurrence_to_override.created_by,
-                    modified_by=occurrence_to_override.modified_by
+                    updated_by=occurrence_to_override.updated_by
                 )
         return first_occurrence, second_occurrence
 

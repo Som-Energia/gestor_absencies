@@ -58,12 +58,12 @@ class TeamViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            modified_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
         serializer.save(
-            modified_by=self.request.user
+            updated_by=self.request.user
         )
 
     def perform_destroy(self, instance):
@@ -102,7 +102,7 @@ class MemberViewSet(viewsets.ModelViewSet):
             (str(self.request.user.pk) in self.request.data['worker'])):
             serializer.save(
                 created_by=self.request.user,
-                modified_by=self.request.user
+                updated_by=self.request.user
             )
         else:
             raise PermissionDenied()
@@ -122,12 +122,12 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
 
         serializer.save(
             created_by=self.request.user,
-            modified_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
         serializer.save(
-            modified_by=self.request.user
+            updated_by=self.request.user
         )
 
     def perform_destroy(self, instance):
@@ -152,12 +152,12 @@ class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            modified_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
         serializer.save(
-            modified_by=self.request.user
+            updated_by=self.request.user
         )
 
     def perform_destroy(self, instance):
@@ -211,7 +211,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser or (str(self.request.user.pk) in self.request.data['worker']):
             serializer.save(
                 created_by=self.request.user,
-                modified_by=self.request.user,
+                updated_by=self.request.user,
                 request=request
             )
             # TODO: Add create_by, modified_time...

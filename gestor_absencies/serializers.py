@@ -103,7 +103,7 @@ class MemberSerializer(serializers.HyperlinkedModelSerializer):
             worker=validated_data['worker'],
             team=validated_data['team'],
             created_by=validated_data['created_by'],
-            modified_by=validated_data['modified_by']
+            updated_by=validated_data['updated_by']
         )
         member.save()
         return member
@@ -243,7 +243,7 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
                 end_time=end_datetime,
                 absence=absence,
                 created_by=user,
-                modified_by=user
+                updated_by=user
             )
             try:
                 new_occurrence.full_clean()

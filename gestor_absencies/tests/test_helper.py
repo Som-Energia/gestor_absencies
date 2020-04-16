@@ -38,7 +38,7 @@ def create_team(created_by, name='IT'):
     team = Team(
         name=name,
         created_by=created_by,
-        modified_by=created_by
+        updated_by=created_by
     )
     team.save()
     return team
@@ -49,7 +49,7 @@ def create_member(worker, team):
         worker=worker,
         team=team,
         created_by=worker,
-        modified_by=worker
+        updated_by=worker
     )
     member.save()
     return member
@@ -61,7 +61,7 @@ def create_vacationpolicy(description, created_by, name='normal', holidays=25):
         description=description,
         holidays=holidays,
         created_by=created_by,
-        modified_by=created_by
+        updated_by=created_by
     )
     vacationpolicy.save()
     return vacationpolicy
@@ -77,7 +77,7 @@ def create_absencetype(name, description, spend_days, min_duration, max_duration
         min_spend=min_duration,
         max_spend=max_duration,
         created_by=created_by,
-        modified_by=created_by,
+        updated_by=created_by,
         color=color,
         global_date=global_date,
     )
@@ -97,7 +97,7 @@ def create_occurrence(absence_type, worker, start_time, end_time, created_by=Non
         start_time=start_time,
         end_time=end_time,
         created_by=created_by,
-        modified_by=created_by
+        updated_by=created_by
     )
     occurrence.save()
     return occurrence
@@ -115,7 +115,7 @@ def create_global_occurrence(start_time, end_time):
         min_spend=1,
         max_spend=1,
         created_by=workers[0],
-        modified_by=workers[0],
+        updated_by=workers[0],
         color='#156420',
         global_date=True,
     )
