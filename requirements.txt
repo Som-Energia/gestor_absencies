@@ -5,3 +5,7 @@ pyyaml
 djangorestframework-jwt
 python-dateutil
 django-cors-headers
+testfixtures
+rq
+rq-scheduler
+django-rq

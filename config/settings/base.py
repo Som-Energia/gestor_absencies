@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    "django_rq",
     # local apps
     'gestor_absencies.apps.GestorAbsenciesConfig',
 
@@ -124,6 +125,10 @@ LOGGING = {
             'propagate': True,
         },
         'gestor_absencies': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        },
+        'scheduler_tasks': {
             'handlers': ['console'],
             'level': 'INFO'
         }

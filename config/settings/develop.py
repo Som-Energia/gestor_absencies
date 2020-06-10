@@ -5,7 +5,7 @@ import yaml
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 with open(os.path.join(BASE_DIR, 'config/settings/config.yaml')) as f:
-    config = yaml.load(f.read())
+    config = yaml.load(f.read(), Loader=yaml.FullLoader)
 
 
 DEBUG = True
@@ -24,3 +24,12 @@ DATABASES = {
 }
 
 CORS_ORIGIN_WHITELIST = config['whitelist']['develop']
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'redis',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}

@@ -58,12 +58,12 @@ class TeamViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            modified_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
         serializer.save(
-            modified_by=self.request.user
+            updated_by=self.request.user
         )
 
     def perform_destroy(self, instance):
@@ -86,6 +86,27 @@ class MemberViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        serializer = MemberSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer, request)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    def perform_create(self, serializer, request):
+        if (self.request.user.is_superuser or
+            (str(self.request.user.pk) in self.request.data['worker'])):
+            serializer.save(
+                created_by=self.request.user,
+                updated_by=self.request.user
+            )
+        else:
+            raise PermissionDenied()
+
     def perform_destroy(self, instance):
         instance.deleted_at = datetime.datetime.now()
         instance.save()
@@ -101,12 +122,12 @@ class VacationPolicyViewSet(viewsets.ModelViewSet):
 
         serializer.save(
             created_by=self.request.user,
-            modified_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
         serializer.save(
-            modified_by=self.request.user
+            updated_by=self.request.user
         )
 
     def perform_destroy(self, instance):
@@ -131,12 +152,12 @@ class SomEnergiaAbsenceTypeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             created_by=self.request.user,
-            modified_by=self.request.user,
+            updated_by=self.request.user,
         )
 
     def perform_update(self, serializer):
         serializer.save(
-            modified_by=self.request.user
+            updated_by=self.request.user
         )
 
     def perform_destroy(self, instance):
@@ -190,7 +211,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser or (str(self.request.user.pk) in self.request.data['worker']):
             serializer.save(
                 created_by=self.request.user,
-                modified_by=self.request.user,
+                updated_by=self.request.user,
                 request=request
             )
             # TODO: Add create_by, modified_time...
@@ -207,7 +228,10 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             if instance.start_time < datetime.datetime.now():
                 raise serializers.ValidationError(_('Can not remove a started occurrence'))
             try:
-                if instance.absence.absence_type.spend_days != 0:
+                occurrence_compute = instance.absence.absence_type.spend_days != 0 and \
+                    instance.start_time.year == instance.end_time.year == \
+                    datetime.datetime.now().year
+                if occurrence_compute:
                     instance.absence.worker.holidays -= Decimal(instance.day_counter())
                     instance.absence.worker.save()
                 instance.deleted_at = datetime.datetime.now()
