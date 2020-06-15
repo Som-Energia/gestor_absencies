@@ -103,11 +103,11 @@ def create_occurrence(absence_type, worker, start_time, end_time, created_by=Non
     return occurrence
 
 
-def create_global_occurrence(start_time, end_time):
+def create_global_occurrence(name, start_time, end_time):
     workers = Worker.objects.all()
 
     global_occurrence = SomEnergiaAbsenceType(
-        name='Global date',
+        name=name,
         description='',
         spend_days=0,
         min_duration=1,

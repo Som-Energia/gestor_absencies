@@ -76,6 +76,7 @@ class SomEnergiaOccurrenceSetupMixin(object):
         self.id_occurrence = self.test_occurrence.pk
 
         self.id_global_occurrence = create_global_occurrence(
+            'Global date',
             start_time=(datetime.datetime(datetime.datetime.now().year + 1, 1, 1)).replace(
                 hour=9, microsecond=0, minute=0, second=0
             ),
@@ -483,6 +484,35 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             absence__absence_type=self.id_absencetype
             ).count(),
             1
+        )
+
+    def test__post_global_date_generate_occurrences(self):
+
+        id_second_global_occurrence = create_global_occurrence(
+            'Test date',
+            start_time=(
+                datetime.datetime(datetime.datetime.now().year + 2, 1, 1)
+            ).replace(hour=9, microsecond=0, minute=0, second=0),
+            end_time=(
+                datetime.datetime(datetime.datetime.now().year + 2, 1, 1)
+            ).replace(hour=15, microsecond=0, minute=0, second=0)
+        )
+
+        self.client.login(username='admin', password='password')
+        response = self.client.get(
+            self.base_url, {'worker': [self.test_worker.pk]}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        self.assertEqual(response.json()['next'], None)
+        self.assertEqual(response.json()['previous'], None)
+        self.assertEqual(
+            response.json()['results'][1]['absence_type'],
+            id_second_global_occurrence
+        )
+        self.assertEqual(
+            response.json()['results'][1]['worker'], self.test_worker.pk
         )
 
     def test__post_passade_occurrence(self):
