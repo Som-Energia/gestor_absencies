@@ -132,6 +132,24 @@ class Worker(AbstractUser):
                     updated_by=self
                 )
                 absence.save()
+
+            global_occurrence_list = SomEnergiaOccurrence.objects.filter(
+                absence__absence_type__global_date=True
+            ).distinct('start_time', 'end_time')
+
+            for global_occurrence in global_occurrence_list:
+                absence = SomEnergiaAbsence.objects.filter(
+                    worker__username=self.username,
+                    absence_type__id=global_occurrence.absence.absence_type.id
+                ).get()
+                occurrence = SomEnergiaOccurrence(
+                    created_by=self,
+                    updated_by=self,
+                    absence=absence,
+                    start_time=global_occurrence.start_time,
+                    end_time=global_occurrence.end_time
+                )
+                occurrence.save()
         else:
             super(Worker, self).save(*args, **kwargs)
 
