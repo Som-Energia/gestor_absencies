@@ -496,6 +496,50 @@ class AdminTest(TestCase):
             1
         )
 
+    def test__worker_post_update_with_past_global_dates(self):
+
+        id_global_occurrence = create_global_occurrence(
+            name="Test Global Ocurrence",
+            start_time=(
+                dt(dt.now().year - 1, 1, 1)
+            ).replace(hour=9, microsecond=0, minute=0, second=0),
+            end_time=(
+                dt(dt.now().year - 1, 1, 1)
+            ).replace(hour=15, microsecond=0, minute=0, second=0)
+        )
+
+        second_worker = create_worker(
+            username='new_worker', email='random@random.coop'
+        )
+        self.client.login(username='admin', password='password')
+        body = {
+            'username': 'new_worker',
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'newmail@example.com'
+        }
+        response = self.client.put(
+            join(self.base_url, str(second_worker.pk)),
+            data=body,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            len(SomEnergiaAbsence.objects.filter(
+                worker__username='new_worker',
+                absence_type__global_date=True
+            )),
+            1
+        )
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker__username='new_worker',
+                absence__absence_type__id=id_global_occurrence
+            )),
+            1
+        )
+
     def tearDown(self):
         self.test_worker.delete()
         self.test_admin.delete()
