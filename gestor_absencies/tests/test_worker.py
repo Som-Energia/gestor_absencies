@@ -4,7 +4,8 @@ from os.path import join
 from django.test import TestCase
 from django.urls import reverse
 from gestor_absencies.models import (Worker, SomEnergiaAbsence,
-                                     SomEnergiaOccurrence)
+                                     SomEnergiaOccurrence,
+                                     SomEnergiaAbsenceType)
 from gestor_absencies.tests.test_helper import (create_absencetype,
                                                 create_vacationpolicy,
                                                 create_worker,
@@ -463,35 +464,32 @@ class AdminTest(TestCase):
             ).replace(hour=15, microsecond=0, minute=0, second=0)
         )
 
-        second_worker = create_worker(
-            username='new_worker', email='random@random.coop'
-        )
-        self.client.login(username='admin', password='password')
         body = {
-            'username': 'new_worker',
-            'first_name': 'first_name',
-            'last_name': 'last_name',
-            'email': 'newmail@example.com'
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'email': 'newmail@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
         }
-        response = self.client.put(
-            join(self.base_url, str(second_worker.pk)),
-            data=body,
-            content_type='application/json'
-        )
 
-        self.assertEqual(response.status_code, 200)
-
-        self.assertEqual(
-            len(SomEnergiaAbsence.objects.filter(
-                worker__username='new_worker',
-                absence_type__global_date=True
-            )),
-            1
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
         )
+        self.assertEqual(response.status_code, 201)
+
+        worker = Worker.objects.filter(
+            username=response.json()['username']
+        ).get()
+        global_occurrence = SomEnergiaAbsenceType.objects.filter(
+            id=id_global_occurrence
+        ).get()
+
         self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
-                absence__worker__username='new_worker',
-                absence__absence_type__id=id_global_occurrence
+                absence__worker=worker,
+                absence__absence_type=global_occurrence
             )),
             1
         )
@@ -508,34 +506,32 @@ class AdminTest(TestCase):
             ).replace(hour=15, microsecond=0, minute=0, second=0)
         )
 
-        second_worker = create_worker(
-            username='new_worker', email='random@random.coop'
-        )
-        self.client.login(username='admin', password='password')
         body = {
-            'username': 'new_worker',
-            'first_name': 'first_name',
-            'last_name': 'last_name',
-            'email': 'newmail@example.com'
+            'username': 'super_peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Palmera',
+            'email': 'superpeli@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
         }
-        response = self.client.put(
-            join(self.base_url, str(second_worker.pk)),
-            data=body,
-            content_type='application/json'
+
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
+
+        worker = Worker.objects.filter(
+            username=response.json()['username']
+        ).get()
+        global_occurrence = SomEnergiaAbsenceType.objects.filter(
+            id=id_global_occurrence
+        ).get()
 
         self.assertEqual(
-            len(SomEnergiaAbsence.objects.filter(
-                worker__username='new_worker',
-                absence_type__global_date=True
-            )),
-            1
-        )
-        self.assertEqual(
             len(SomEnergiaOccurrence.objects.filter(
-                absence__worker__username='new_worker',
-                absence__absence_type__id=id_global_occurrence
+                absence__worker=worker,
+                absence__absence_type=global_occurrence
             )),
             1
         )
