@@ -5,7 +5,8 @@ from datetime import timedelta as td
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
-from gestor_absencies.models import SomEnergiaAbsence, SomEnergiaOccurrence
+from gestor_absencies.models import (SomEnergiaAbsence, SomEnergiaOccurrence,
+                                     Worker)
 from gestor_absencies.tests.test_helper import (calculate_occurrence_dates,
                                                 create_absencetype,
                                                 create_member,
@@ -76,6 +77,7 @@ class SomEnergiaOccurrenceSetupMixin(object):
         self.id_occurrence = self.test_occurrence.pk
 
         self.id_global_occurrence = create_global_occurrence(
+            'Global date',
             start_time=(datetime.datetime(datetime.datetime.now().year + 1, 1, 1)).replace(
                 hour=9, microsecond=0, minute=0, second=0
             ),
@@ -483,6 +485,50 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             absence__absence_type=self.id_absencetype
             ).count(),
             1
+        )
+
+    def test__post_global_date_generate_occurrences(self):
+
+        global_date = create_absencetype(
+            name='Festa nacional',
+            description='Festa nacional',
+            spend_days=0,
+            min_duration=1,
+            max_duration=1,
+            created_by=self.test_admin,
+            color='#000000',
+            global_date=True
+        )
+
+        all_workers = Worker.objects.all()
+        all_workers_ids = [worker.pk for worker in all_workers]
+        body = {
+            'absence_type': global_date.pk,
+            'worker': all_workers_ids,
+            'start_time': self.testoccurrence_start_time - td(days=1),
+            'start_morning': True,
+            'start_afternoon': True,
+            'end_time': calculate_occurrence_dates(
+                self.testoccurrence_start_time - td(days=1),
+                1,
+                0
+            ).replace(hour=17),
+            'end_morning': True,
+            'end_afternoon': True
+        }
+
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.assertEqual(response.status_code, 201)
+
+        global_occurrence_list = SomEnergiaOccurrence.objects.filter(
+            absence__absence_type__global_date=True
+        ).distinct('start_time', 'end_time')
+
+        self.assertEqual(
+            len(global_occurrence_list), 2
         )
 
     def test__post_passade_occurrence(self):

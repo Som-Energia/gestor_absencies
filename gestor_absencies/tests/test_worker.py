@@ -3,10 +3,13 @@ from os.path import join
 
 from django.test import TestCase
 from django.urls import reverse
-from gestor_absencies.models import Worker
+from gestor_absencies.models import (Worker, SomEnergiaAbsence,
+                                     SomEnergiaOccurrence,
+                                     SomEnergiaAbsenceType)
 from gestor_absencies.tests.test_helper import (create_absencetype,
                                                 create_vacationpolicy,
-                                                create_worker)
+                                                create_worker,
+                                                create_global_occurrence)
 
 
 class AdminTest(TestCase):
@@ -448,6 +451,90 @@ class AdminTest(TestCase):
 
     def test__worker_put_set_modified_params(self):
         pass
+
+    def test__worker_post_update_with_global_dates(self):
+
+        id_global_occurrence = create_global_occurrence(
+            name="Test Global Ocurrence",
+            start_time=(
+                dt(dt.now().year + 1, 1, 1)
+            ).replace(hour=9, microsecond=0, minute=0, second=0),
+            end_time=(
+                dt(dt.now().year + 1, 1, 1)
+            ).replace(hour=15, microsecond=0, minute=0, second=0)
+        )
+
+        body = {
+            'username': 'Peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Manzano',
+            'email': 'newmail@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
+        }
+
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.assertEqual(response.status_code, 201)
+
+        worker = Worker.objects.filter(
+            username=response.json()['username']
+        ).get()
+        global_occurrence = SomEnergiaAbsenceType.objects.filter(
+            id=id_global_occurrence
+        ).get()
+
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=worker,
+                absence__absence_type=global_occurrence
+            )),
+            1
+        )
+
+    def test__worker_post_update_with_past_global_dates(self):
+
+        id_global_occurrence = create_global_occurrence(
+            name="Test Global Ocurrence",
+            start_time=(
+                dt(dt.now().year - 1, 1, 1)
+            ).replace(hour=9, microsecond=0, minute=0, second=0),
+            end_time=(
+                dt(dt.now().year - 1, 1, 1)
+            ).replace(hour=15, microsecond=0, minute=0, second=0)
+        )
+
+        body = {
+            'username': 'super_peli',
+            'password': 'yalo',
+            'first_name': 'Pelayo',
+            'last_name': 'Palmera',
+            'email': 'superpeli@example.com',
+            'vacation_policy': self.test_vacation_policy.pk
+        }
+
+        self.client.login(username='admin', password='password')
+        response = self.client.post(
+            self.base_url, data=body
+        )
+        self.assertEqual(response.status_code, 201)
+
+        worker = Worker.objects.filter(
+            username=response.json()['username']
+        ).get()
+        global_occurrence = SomEnergiaAbsenceType.objects.filter(
+            id=id_global_occurrence
+        ).get()
+
+        self.assertEqual(
+            len(SomEnergiaOccurrence.objects.filter(
+                absence__worker=worker,
+                absence__absence_type=global_occurrence
+            )),
+            1
+        )
 
     def tearDown(self):
         self.test_worker.delete()
