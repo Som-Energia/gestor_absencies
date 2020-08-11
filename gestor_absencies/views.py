@@ -32,6 +32,9 @@ from rest_framework.exceptions import PermissionDenied
 logger = logging.getLogger(__name__)
 
 
+WORKER_PROTECTED_FIELDS = ['username', 'category', 'contract_date']
+
+
 class WorkerViewSet(viewsets.ModelViewSet):
     queryset = Worker.objects.all().order_by('id')
     serializer_class = WorkerSerializer
@@ -46,8 +49,17 @@ class WorkerViewSet(viewsets.ModelViewSet):
             serializer.save()
             # TODO: Add create_by, modified_time...
 
+    def user_can_update(self):
+        if not self.request.user == self.get_object():
+            return False
+        for field in self.request._data.keys():
+            if field in WORKER_PROTECTED_FIELDS:
+                return False
+
+        return True
+
     def perform_update(self, serializer):
-        if self.request.user == self.get_object() or self.request.user.is_superuser:
+        if self.request.user.is_superuser or self.user_can_update():
             serializer.save()
             # TODO: modified_time...
         else:
