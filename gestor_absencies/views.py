@@ -36,6 +36,11 @@ class WorkerViewSet(viewsets.ModelViewSet):
     queryset = Worker.objects.all().order_by('id')
     serializer_class = WorkerSerializer
 
+    def get_serializer_context(self):
+        context = super(WorkerViewSet, self).get_serializer_context()
+        context.update({'is_superuser': self.request.user.is_superuser})
+        return context
+
     def perform_create(self, serializer):
         if self.request.user.is_superuser:
             serializer.save()

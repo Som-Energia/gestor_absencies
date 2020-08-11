@@ -171,9 +171,6 @@ class AdminTest(TestCase):
                          'last_name': 'last_name',
                          'username': 'username',
                          'holidays': '0.0',
-                         'gender': '',
-                         'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'vacation_policy': None,
                          'working_week': 40
                          },
@@ -183,9 +180,6 @@ class AdminTest(TestCase):
                          'last_name': 'last_name',
                          'username': 'admin',
                          'holidays': '0.0',
-                         'gender': '',
-                         'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'vacation_policy': None,
                          'working_week': 40
                          },
@@ -206,9 +200,6 @@ class AdminTest(TestCase):
                     'username': 'username',
                     'id': self.id_worker,
                     'holidays': '0.0',
-                    'gender': '',
-                    'category': '',
-                    'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'vacation_policy': None,
                     'working_week': 40
                     }
@@ -307,9 +298,6 @@ class AdminTest(TestCase):
             'username': 'username',
             'id': self.id_worker,
             'holidays': '0.0',
-            'gender': '',
-            'category': '',
-            'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'vacation_policy': None,
             'working_week': 40
         }

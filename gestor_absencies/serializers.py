@@ -16,6 +16,9 @@ from .models import (CategoryChoices, GenderChoices, Member, SomEnergiaAbsence,
                      VacationPolicy, Worker)
 
 
+WORKER_SENSITIVE_FIELDS = ['gender', 'category', 'contract_date']
+
+
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
     email = serializers.EmailField(required=False)
     password = serializers.CharField(write_only=True, required=False)
@@ -49,6 +52,16 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
             'working_week',
             'vacation_policy'
         ]
+
+    @property
+    def _readable_fields(self):
+        is_superuser = self.context.get('is_superuser', False)
+        for field in self.fields.values():
+            user_can_see_field = is_superuser or \
+                field.source not in WORKER_SENSITIVE_FIELDS
+
+            if not field.write_only and user_can_see_field:
+                yield field
 
     def create(self, validated_data):
         """Create and return a new worker."""
