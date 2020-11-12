@@ -1,5 +1,6 @@
 import datetime
 from datetime import timedelta as td
+from django.conf import settings
 
 import dateutil.rrule as rrule
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -16,7 +17,7 @@ from .models import (CategoryChoices, GenderChoices, Member, SomEnergiaAbsence,
                      VacationPolicy, Worker)
 
 
-WORKER_SENSITIVE_FIELDS = ['gender', 'category', 'contract_date']
+WORKER_SENSITIVE_FIELDS = settings.WORKER_SENSITIVE_FIELDS
 
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):

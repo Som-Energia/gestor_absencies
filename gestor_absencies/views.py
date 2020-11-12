@@ -21,6 +21,7 @@ from .serializers import (
     VacationPolicySerializer
 )
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ValidationError
@@ -32,7 +33,7 @@ from rest_framework.exceptions import PermissionDenied
 logger = logging.getLogger(__name__)
 
 
-WORKER_PROTECTED_FIELDS = ['username', 'category', 'contract_date']
+WORKER_PROTECTED_FIELDS = settings.WORKER_PROTECTED_FIELDS
 
 
 class WorkerViewSet(viewsets.ModelViewSet):

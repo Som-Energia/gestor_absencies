@@ -1,9 +1,16 @@
 import os
-# import datetime
+import yaml
 
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
+
+with open(os.path.join(BASE_DIR, 'config/settings/config.yaml')) as f:
+    config = yaml.load(f.read(), Loader=yaml.FullLoader)
+
+WORKER_PROTECTED_FIELDS = config['worker_protected_fieds']
+WORKER_SENSITIVE_FIELDS = config['worker_sensitive_fields']
+
 
 # Application definition
 
