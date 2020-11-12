@@ -251,11 +251,9 @@ class AdminTest(TestCase):
     def test__worker_can_update_her_profile__worker(self):
         self.client.login(username='username', password='password')
         body = {
-            'username': 'worker',
             'first_name': 'first_name',
             'last_name': 'last_name',
             'email': 'newmail@example.com',
-            'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'working_week': 32
         }
         response = self.client.put(
@@ -266,7 +264,7 @@ class AdminTest(TestCase):
         expected = {'first_name': 'first_name',
                     'last_name': 'last_name',
                     'email': 'newmail@example.com',
-                    'username': 'worker',
+                    'username': 'username',
                     'id': self.id_worker,
                     'holidays': '0.0',
                     'vacation_policy': None,
@@ -306,7 +304,6 @@ class AdminTest(TestCase):
     def test__worker_can_change_password__worker(self):
         self.client.login(username='username', password='password')
         body = {
-            'username': 'username',
             'password': 'newpassword'
         }
         response = self.client.put(
