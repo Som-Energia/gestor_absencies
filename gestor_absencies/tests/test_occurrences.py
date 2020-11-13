@@ -266,9 +266,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -302,9 +300,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin, self.test_worker.pk],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -364,11 +360,9 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin, self.test_worker.pk],
             'start_time': self.testoccurrence_start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(
                 self.testoccurrence_start_time, 3, 0
             ),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -417,13 +411,11 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(
                 self.testoccurrence_start_time,
                 4,
                 0
             ),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -459,13 +451,11 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time - td(days=1),
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(
                 self.testoccurrence_start_time - td(days=1),
                 4,
                 0
             ),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -505,13 +495,11 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': all_workers_ids,
             'start_time': self.testoccurrence_start_time - td(days=1),
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(
                 self.testoccurrence_start_time - td(days=1),
                 1,
                 0
             ).replace(hour=17),
-            'end_morning': True,
             'end_afternoon': True
         }
 
@@ -536,9 +524,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -563,9 +549,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.test_occurrence.delete()
@@ -612,9 +596,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 10, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -656,9 +638,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 10, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -713,9 +693,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -760,9 +738,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -814,9 +790,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 30, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -854,9 +828,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 20, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -894,9 +866,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.test_admin.holidays = 0
@@ -943,9 +913,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.test_admin.holidays = 0
@@ -977,9 +945,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 20, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.test_admin.holidays = 25
@@ -1075,9 +1041,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': False,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 2, 0),
-            'end_morning': True,
             'end_afternoon': False
         }
         self.test_admin.holidays = 25
@@ -1187,9 +1151,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 1, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -1252,9 +1214,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(self.testoccurrence_start_time, 1, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -1318,9 +1278,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 1, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')
@@ -1448,7 +1406,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': self.testoccurrence_start_time,
             'start_morning': False,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(self.testoccurrence_start_time, 1, 0),
             'end_morning': False,
             'end_afternoon': True
@@ -1596,9 +1553,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.test_worker.pk],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='username', password='password')
@@ -1615,9 +1570,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 1, 0),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='username', password='password')
@@ -1650,9 +1603,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 5, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
 
@@ -1715,9 +1666,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 3, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
 
@@ -1791,9 +1740,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             'worker': [self.id_admin],
             'start_time': start_time,
             'start_morning': True,
-            'start_afternoon': True,
             'end_time': calculate_occurrence_dates(start_time, 2, -1),
-            'end_morning': True,
             'end_afternoon': True
         }
         self.client.login(username='admin', password='password')

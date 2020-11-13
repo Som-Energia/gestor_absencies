@@ -178,10 +178,10 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
         min_length=1,
         required=True
     )
-    start_morning = serializers.BooleanField(default=False, write_only=True)
-    start_afternoon = serializers.BooleanField(default=False, write_only=True)
-    end_morning = serializers.BooleanField(default=False, write_only=True)
-    end_afternoon = serializers.BooleanField(default=False, write_only=True)
+    start_morning = serializers.BooleanField(default=True, write_only=True)
+    start_afternoon = serializers.BooleanField(default=True, write_only=True)
+    end_morning = serializers.BooleanField(default=True, write_only=True)
+    end_afternoon = serializers.BooleanField(default=True, write_only=True)
 
     class Meta:
         model = SomEnergiaOccurrence
@@ -226,14 +226,17 @@ class CreateSomEnergiaOccurrenceSerializer(serializers.HyperlinkedModelSerialize
 
     def validate(self, data):
 
-        if ((not data['start_morning'] and not data['start_afternoon']) or
-           (not data['end_morning'] and not data['end_afternoon'])):
-            raise serializers.ValidationError('Incorrect format occurrence')
+        incorrect_begin_or_end_occurrence = (
+            (not data['start_morning'] and not data['start_afternoon']) or
+            (not data['end_morning'] and not data['end_afternoon'])
+        )
+        have_holes = (not data['start_afternoon'] or
+                      not data['end_morning'])
+        days_occurrence_duration = (data['end_time'] - data['start_time']).days
 
-        if (data['end_time'].day - data['start_time'].day >= 1) and (
-            data['start_morning'] and not data['start_afternoon'] or
-                not data['end_morning'] and data['end_afternoon']):
-                    raise serializers.ValidationError('Incorrect format occurrence')
+        if (incorrect_begin_or_end_occurrence or
+           (days_occurrence_duration >= 1 and have_holes)):
+            raise serializers.ValidationError('Incorrect format occurrence')
 
         return data
 
