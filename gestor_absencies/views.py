@@ -66,6 +66,10 @@ class WorkerViewSet(viewsets.ModelViewSet):
         else:
             raise PermissionDenied()
 
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return super(WorkerViewSet, self).update(request, *args, **kwargs)
+
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all().filter(
