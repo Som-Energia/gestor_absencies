@@ -171,9 +171,6 @@ class AdminTest(TestCase):
                          'last_name': 'last_name',
                          'username': 'username',
                          'holidays': '0.0',
-                         'gender': '',
-                         'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'vacation_policy': None,
                          'working_week': 40
                          },
@@ -183,9 +180,6 @@ class AdminTest(TestCase):
                          'last_name': 'last_name',
                          'username': 'admin',
                          'holidays': '0.0',
-                         'gender': '',
-                         'category': '',
-                         'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                          'vacation_policy': None,
                          'working_week': 40
                          },
@@ -206,9 +200,6 @@ class AdminTest(TestCase):
                     'username': 'username',
                     'id': self.id_worker,
                     'holidays': '0.0',
-                    'gender': '',
-                    'category': '',
-                    'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'vacation_policy': None,
                     'working_week': 40
                     }
@@ -260,11 +251,9 @@ class AdminTest(TestCase):
     def test__worker_can_update_her_profile__worker(self):
         self.client.login(username='username', password='password')
         body = {
-            'username': 'worker',
             'first_name': 'first_name',
             'last_name': 'last_name',
             'email': 'newmail@example.com',
-            'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'working_week': 32
         }
         response = self.client.put(
@@ -275,22 +264,46 @@ class AdminTest(TestCase):
         expected = {'first_name': 'first_name',
                     'last_name': 'last_name',
                     'email': 'newmail@example.com',
-                    'username': 'worker',
+                    'username': 'username',
                     'id': self.id_worker,
                     'holidays': '0.0',
-                    'gender': '',
-                    'category': '',
-                    'contract_date': dt(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
                     'vacation_policy': None,
                     'working_week': 32
                     }
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), expected)
 
+    def test__worker_cant_update_protected_fields__worker(self):
+        self.client.login(username='username', password='password')
+        body = {
+            'username': 'manolita',
+            'contract_date': dt(2014, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+            'category': 'manager'
+        }
+        response = self.client.put(
+            join(self.base_url, str(self.id_worker)),
+            data=body,
+            content_type='application/json'
+        )
+        expected = {
+            'first_name': 'first_name',
+            'last_name': 'last_name',
+            'email': 'email@example.com',
+            'username': 'worker',
+            'id': self.id_worker,
+            'holidays': '0.0',
+            'vacation_policy': None,
+            'working_week': 40
+        }
+        self.assertEqual(response.status_code, 403)
+        self.test_worker.refresh_from_db()
+        self.assertEqual(self.test_worker.username, "username")
+        self.assertEqual(self.test_worker.category, "")
+        self.assertEqual(self.test_worker.contract_date, dt(2018, 9, 1))
+
     def test__worker_can_change_password__worker(self):
         self.client.login(username='username', password='password')
         body = {
-            'username': 'username',
             'password': 'newpassword'
         }
         response = self.client.put(
@@ -307,9 +320,6 @@ class AdminTest(TestCase):
             'username': 'username',
             'id': self.id_worker,
             'holidays': '0.0',
-            'gender': '',
-            'category': '',
-            'contract_date': dt(2018, 9, 1).strftime("%Y-%m-%dT%H:%M:%S"),
             'vacation_policy': None,
             'working_week': 40
         }
@@ -535,6 +545,8 @@ class AdminTest(TestCase):
             )),
             1
         )
+
+
 
     def tearDown(self):
         self.test_worker.delete()

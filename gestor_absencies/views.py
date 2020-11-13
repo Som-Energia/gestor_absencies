@@ -21,6 +21,7 @@ from .serializers import (
     VacationPolicySerializer
 )
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ValidationError
@@ -32,17 +33,34 @@ from rest_framework.exceptions import PermissionDenied
 logger = logging.getLogger(__name__)
 
 
+WORKER_PROTECTED_FIELDS = settings.WORKER_PROTECTED_FIELDS
+
+
 class WorkerViewSet(viewsets.ModelViewSet):
     queryset = Worker.objects.all().order_by('id')
     serializer_class = WorkerSerializer
+
+    def get_serializer_context(self):
+        context = super(WorkerViewSet, self).get_serializer_context()
+        context.update({'is_superuser': self.request.user.is_superuser})
+        return context
 
     def perform_create(self, serializer):
         if self.request.user.is_superuser:
             serializer.save()
             # TODO: Add create_by, modified_time...
 
+    def user_can_update(self):
+        if not self.request.user == self.get_object():
+            return False
+        for field in self.request._data.keys():
+            if field in WORKER_PROTECTED_FIELDS:
+                return False
+
+        return True
+
     def perform_update(self, serializer):
-        if self.request.user == self.get_object() or self.request.user.is_superuser:
+        if self.request.user.is_superuser or self.user_can_update():
             serializer.save()
             # TODO: modified_time...
         else:

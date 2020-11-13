@@ -1,5 +1,6 @@
 import datetime
 from datetime import timedelta as td
+from django.conf import settings
 
 import dateutil.rrule as rrule
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -14,6 +15,9 @@ from gestor_absencies.common.utils import (computable_days_between_dates,
 from .models import (CategoryChoices, GenderChoices, Member, SomEnergiaAbsence,
                      SomEnergiaAbsenceType, SomEnergiaOccurrence, Team,
                      VacationPolicy, Worker)
+
+
+WORKER_SENSITIVE_FIELDS = settings.WORKER_SENSITIVE_FIELDS
 
 
 class WorkerSerializer(serializers.HyperlinkedModelSerializer):
@@ -49,6 +53,16 @@ class WorkerSerializer(serializers.HyperlinkedModelSerializer):
             'working_week',
             'vacation_policy'
         ]
+
+    @property
+    def _readable_fields(self):
+        is_superuser = self.context.get('is_superuser', False)
+        for field in self.fields.values():
+            user_can_see_field = is_superuser or \
+                field.source not in WORKER_SENSITIVE_FIELDS
+
+            if not field.write_only and user_can_see_field:
+                yield field
 
     def create(self, validated_data):
         """Create and return a new worker."""

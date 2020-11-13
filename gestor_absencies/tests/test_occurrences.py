@@ -70,9 +70,7 @@ class SomEnergiaOccurrenceSetupMixin(object):
             absence_type=self.test_absencetype,
             worker=self.test_admin,
             start_time=self.testoccurrence_start_time,
-            end_time=calculate_occurrence_dates(
-                self.testoccurrence_start_time, 3, 0
-            ).replace(hour=17)
+            end_time=self.testoccurrence_end_time
         )
         self.id_occurrence = self.test_occurrence.pk
 
@@ -82,13 +80,13 @@ class SomEnergiaOccurrenceSetupMixin(object):
                 hour=9, microsecond=0, minute=0, second=0
             ),
             end_time=(datetime.datetime(datetime.datetime.now().year + 1, 1, 1)).replace(
-                hour=15, microsecond=0, minute=0, second=0
+                hour=17, microsecond=0, minute=0, second=0
             )
         )
 
     def tearDown(self):
-        if SomEnergiaOccurrence.objects.filter(id=self.id_occurrence).count():
-            self.test_occurrence.delete()
+        for occurrence in SomEnergiaOccurrence.objects.all():
+            occurrence.delete()
         self.test_vacationpolicy.delete()
         self.test_admin.delete()
         self.test_absencetype.delete()
@@ -576,6 +574,7 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
             self.base_url, data=body
         )
 
+        datetime.datetime = old_datetime
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['absence_type'], self.id_absencetype)
         self.assertEqual(response.json()['worker'], [self.id_admin])
@@ -594,7 +593,6 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
                 )
             )
         )
-        datetime.datetime = old_datetime
 
     def test__post_occurrence__next_year(self):
         absence_type = create_absencetype(
@@ -794,12 +792,19 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         self.assertEqual(self.test_admin.holidays, 22)
 
     def test__post_occurrence__not_enough_holidays_current_year(self):
+        old_datetime = datetime.datetime
+        datetime.datetime = self.make_datetime(
+            year=old_datetime.now().year,
+            month=1,
+            day=1,
+            hour=11
+        )
         absence_type = create_absencetype(
-            name='esce',
-            description='Escola',
+            name='Vacances',
+            description='Vacances',
             spend_days=-1,
-            min_duration=30,
-            max_duration=30,
+            min_duration=0.5,
+            max_duration=-1,
             created_by=self.test_admin,
             color='#156420',
         )
@@ -818,13 +823,13 @@ class SomEnergiaOccurrencePOSTTest(SomEnergiaOccurrenceSetupMixin, TestCase):
         response = self.client.post(
             self.base_url, data=body
         )
+        datetime.datetime = old_datetime
         self.test_admin.refresh_from_db()
-
         expected = ['Not enough holidays']
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), expected)
         self.assertEqual(self.test_admin.holidays, 25)
-    
+
     def test__post_occurrence__not_enough_holidays_next_year(self):
         absence_type = create_absencetype(
             name='vacances',
@@ -1958,7 +1963,7 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
     def test__cant_delete_passade_occurrence(self):
         old_datetime = datetime.datetime
         datetime.datetime = self.make_datetime(
-            (self.testoccurrence_start_time + td(days=1)).year,
+            (self.testoccurrence_start_time + td(weeks=8)).year,
             (self.testoccurrence_start_time + td(weeks=8)).month,
             (self.testoccurrence_start_time - td(days=1)).day,
             11
@@ -1968,9 +1973,9 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
             '/'.join([self.base_url, str(self.id_occurrence)])
         )
 
+        datetime.datetime = old_datetime
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), ['Can not remove a started occurrence'])
-        datetime.datetime = old_datetime
 
     def test__can_delete_next_month_occurrence(self):
         old_datetime = datetime.datetime
@@ -1988,8 +1993,8 @@ class SomEnergiaOccurrenceDELETETest(SomEnergiaOccurrenceSetupMixin, TestCase):
             '/'.join([self.base_url, str(self.id_occurrence)])
         )
 
-        self.assertEqual(response.status_code, 204)
         datetime.datetime = old_datetime
+        self.assertEqual(response.status_code, 204)
 
     def test__can_delete_next_year_occurrence(self):
         absence_type = create_absencetype(
