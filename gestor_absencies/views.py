@@ -121,7 +121,7 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer, request):
         if (self.request.user.is_superuser or
-            (str(self.request.user.pk) in self.request.data['worker'])):
+           int(self.request.user.pk) == int(self.request.data['worker'])):
             serializer.save(
                 created_by=self.request.user,
                 updated_by=self.request.user
