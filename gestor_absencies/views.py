@@ -97,7 +97,9 @@ class MemberViewSet(viewsets.ModelViewSet):
     serializer_class = MemberSerializer
 
     def get_queryset(self):
-        queryset = Member.objects.all().order_by('id')
+        queryset = Member.objects.filter(
+            deleted_at__isnull=True
+        ).order_by('id')
         team = self.request.query_params.get('team')
         worker = self.request.query_params.get('worker')
 
@@ -221,7 +223,7 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = CreateSomEnergiaOccurrenceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer, request)
+        self.perform_create(serializer, serializer.validated_data)
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data,
@@ -229,12 +231,13 @@ class SomEnergiaOccurrenceViewSet(viewsets.ModelViewSet):
             headers=headers
         )
 
-    def perform_create(self, serializer, request):
-        if self.request.user.is_superuser or (str(self.request.user.pk) in self.request.data['worker']):
+    def perform_create(self, serializer, data):
+        if (self.request.user.is_superuser or
+           self.request.user.pk in data['worker']):
             serializer.save(
                 created_by=self.request.user,
                 updated_by=self.request.user,
-                request=request
+                request=self.request
             )
             # TODO: Add create_by, modified_time...
         else:
