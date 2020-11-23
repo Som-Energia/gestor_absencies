@@ -18,7 +18,14 @@ databases:
     password: password
 
 whitelist:
-  prod: ["element"]
+  prod:
+    - "element"
 
-worker_protected_fieds: ['username', 'category', 'contract_date']
-worker_sensitive_fields: ['gender', 'category', 'contract_date']
+worker_protected_fieds:
+  - 'username'
+  - 'category'
+  - 'contract_date'
+worker_sensitive_fields:
+  - 'gender'
+  - 'category'
+  - 'contract_date'
